@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrOCR · Bestilling</title>
+<style>
+:root{color-scheme:light;--page:#eef2ef;--paper:#fff;--ink:#162922;--muted:#52665c;--line:#d9e2dc;--green:#18563f;--dark:#102a23}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--page);color:var(--ink);font:16px system-ui,sans-serif}
+main{width:100%;height:100dvh;margin:auto;padding:0 0 env(safe-area-inset-bottom);display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:0}
+h1,h2,p{margin:0}
+h1{font-size:clamp(19px,5vw,24px);letter-spacing:-.035em}
+h2{font-size:15px}
+header,nav,footer,.heading,li,.sheet-top{display:flex;align-items:center;gap:8px}
+header,.heading,footer,.sheet-top{justify-content:space-between}
+button{min-height:44px;padding:6px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:inherit;font:inherit;font-weight:650;cursor:pointer;touch-action:manipulation}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible{outline:2px solid #bf8b3b;outline-offset:2px}
+.primary{flex:1;color:white;background:var(--green);border-color:var(--green);font-size:18px}
+.notebook{position:relative;min-height:0;overflow:hidden;background:var(--dark)}
+#ink{display:block;width:100%;height:100%;background:repeating-linear-gradient(to bottom,var(--dark) 0 33px,#2b493e 33px 34px)}
+#ink{touch-action:none;cursor:crosshair;background-position:0 var(--ink-offset,0px)}
+.tools{position:absolute;bottom:8px;left:8px;display:flex;gap:6px}
+.tools button,#next-line{display:grid;place-items:center;width:44px;padding:0;color:#f4faf6;background:#214638;border-color:#3c6151}
+#next-line{position:absolute;bottom:8px;right:8px;color:var(--dark);background:#d9eddf}
+.icon-svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+#cart{display:flex;flex-direction:column;gap:3px;min-height:0;max-height:26dvh;padding:4px 6px;background:var(--paper);overflow:auto;scrollbar-width:thin}
+#corrections{display:flex;gap:4px;flex-wrap:wrap}
+#corrections button{font-size:13px;min-height:38px;padding:4px 8px}
+#suggestion,#status{font-size:13px;overflow-wrap:anywhere}
+#suggestion{color:var(--muted)}
+#status{color:#8a411e}
+#all{border:0;min-height:32px;padding:2px 4px;font-size:13px;color:var(--green)}
+ul{list-style:none;margin:0;padding:0}
+li{padding:6px 7px;overflow-wrap:anywhere}
+li>div{flex:1;min-width:0}
+li small{display:block;margin-top:2px;color:var(--muted)}
+#latest li{background:#e3f1e8;border-radius:9px}
+.icon{min-width:44px;padding:0;font-size:20px}
+.remove{color:#922f2f}
+footer{color:var(--muted);font-size:14px;gap:5px;padding:3px 6px;background:var(--page)}
+#ok{display:grid;place-items:center}
+#ok[aria-busy=true] svg{opacity:.45}
+#total{display:none}
+footer .tool-icon{display:grid;place-items:center;width:44px;padding:0}
+#total{white-space:nowrap;font-size:12px}
+#all{align-self:flex-end}
+@media(max-width:340px){#total{display:none}}
+footer .print-icon{display:grid;place-items:center;min-width:48px;background:var(--green);border-color:var(--green);color:white}
+.ink-preview{display:block;max-width:100%;max-height:90px;object-fit:contain;object-position:left}
+dialog{width:min(100% - 16px,38rem);max-height:82dvh;margin:auto auto 8px;border:1px solid var(--line);border-radius:16px;padding:12px;color:var(--ink);background:var(--paper)}
+dialog::backdrop{background:#102a2380}
+.sheet-top{position:sticky;top:-12px;background:white;z-index:1;padding:4px 0}
+.quick,#menu-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}
+.quick button{text-align:left;background:#e3f1e8;border-color:#c9e1d1}
+#menu-list button{text-align:left;font-size:14px}
+#sheet{display:none}
+@media print{main,dialog{display:none!important}body{color:#000;background:#fff}#sheet{display:block}#sheet li{break-inside:avoid}#sheet .ink-preview{max-height:none}}
+</style>
+</head>
+<body>
+<main>
+<div class="notebook">
+<canvas id="ink" aria-label="Skriv med penn, finger eller mus"></canvas>
+<div class="tools"><button id="undo" type="button" aria-label="Angre siste strek" title="Angre siste strek"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5m-5-5h11a4 4 0 0 1 4 4v2"/></svg></button></div>
+<button id="next-line" type="button" aria-label="Bla opp og fortsett å skrive" title="Bla opp og fortsett å skrive"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4m-6 6 6-6 6 6"/></svg></button>
+</div>
+<section id="cart" aria-label="Bestilling" hidden>
+<button id="all" type="button" hidden>Vis alle</button>
+<p id="status" role="status" hidden></p>
+<div id="corrections" aria-label="Mulige varer" hidden></div>
+<ul id="latest"></ul>
+</section>
+<footer aria-label="Bestillingshandlinger">
+<button id="clear" class="tool-icon" type="button" aria-label="Tøm felt" title="Tøm felt"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg></button>
+<button id="ok" class="primary" type="button" aria-label="Legg til bestilling" title="Legg til bestilling"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></button>
+<span id="total" hidden></span><button id="print" class="print-icon" type="button" aria-label="Skriv ut bestillingen" title="Skriv ut bestillingen" disabled><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6zM17 12h1"/></svg></button></footer>
+</main>
+<dialog id="basket"><div class="sheet-top"><h2>Alle varer</h2><form method="dialog"><button aria-label="Lukk bestillingen">×</button></form></div><ul id="basket-lines"></ul></dialog>
+<section id="sheet"><h2>Kjøkkenbestilling</h2><ul id="print-lines"></ul></section>
+<script>
+'use strict';
+const catalog = {"products": [{"id": "gf_item_17777927", "name": "1. Classico", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17777930", "name": "2. Capri", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17777931", "name": "3. Al Capone", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782816", "name": "4. Parma", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782817", "name": "5. Sjefens favoritt", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782818", "name": "6. Torino", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782819", "name": "7. Mexican Style", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782820", "name": "8. Kebabpizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782821", "name": "9. Kyllingpizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782822", "name": "10. Alfredo", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782823", "name": "11. Calzone (innbakt pizza)", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782824", "name": "12. Ciao Ciao", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782825", "name": "13. Pollo Marina", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782826", "name": "14. Bianca", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_19838139", "name": "15. Fantasia", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_19838148", "name": "16. Diavola", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_18111705", "name": "17. Lag din egen pizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17785864", "name": "Hvitløksdressing", "sizes": ["Standard"]}, {"id": "gf_item_17785865", "name": "Béarnaisesaus", "sizes": ["Standard"]}, {"id": "gf_item_17788540", "name": "Kebab i pita", "sizes": ["Standard"]}, {"id": "gf_item_17788543", "name": "Kyllingkebab i pita", "sizes": ["Standard"]}, {"id": "gf_item_17788668", "name": "Kebabrull", "sizes": ["Standard"]}, {"id": "gf_item_17788669", "name": "Kyllingkebabrull", "sizes": ["Standard"]}, {"id": "gf_item_17788670", "name": "Kebabtallerken", "sizes": ["Standard"]}, {"id": "gf_item_17788673", "name": "Kyllingkebabtallerken", "sizes": ["Standard"]}, {"id": "gf_item_19766893", "name": "Dobbel burger", "sizes": ["200gr + 200gr"]}, {"id": "gf_item_18046629", "name": "Hamburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17783145", "name": "Cheeseburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786621", "name": "BBQ Bacon Cheese Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786623", "name": "BlåmuggostBurger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786627", "name": "Nachosburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786630", "name": "Parmaburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17996124", "name": "Pommes frites", "sizes": ["Standard"]}, {"id": "gf_item_17786657", "name": "Søtpotetfries", "sizes": ["Standard"]}, {"id": "gf_item_17786658", "name": "Mozzarellasticks (5 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17786659", "name": "Løkringer (6 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17787022", "name": "Biffsnadder", "sizes": ["Standard"]}, {"id": "gf_item_24764648", "name": "Kyllingsnadder", "sizes": ["Standard"]}, {"id": "gf_item_19838227", "name": "Hvitløksnadder", "sizes": ["Standard"]}, {"id": "gf_item_19838277", "name": "Fish and chips", "sizes": ["Standard"]}, {"id": "gf_item_19838316", "name": "Løvstek", "sizes": ["Standard"]}, {"id": "gf_item_19838323", "name": "Kyllingsalat", "sizes": ["Standard"]}, {"id": "gf_item_19838325", "name": "Skinkesalat", "sizes": ["Standard"]}, {"id": "gf_item_17820969", "name": "Vegetarburger", "sizes": ["Standard"]}, {"id": "gf_item_17820970", "name": "Vegetarpizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17994559", "name": "Pommes frites", "sizes": ["Standard"]}, {"id": "gf_item_17816461", "name": "Søtpotetfries", "sizes": ["Standard"]}, {"id": "gf_item_17816463", "name": "Mozzarellasticks (5 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17816465", "name": "Løkringer (6 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17820962", "name": "Barneburger", "sizes": ["Standard"]}, {"id": "gf_item_17820963", "name": "Barnepizza", "sizes": ["Standard"]}, {"id": "gf_item_17994561", "name": "Pommes frites", "sizes": ["Standard"]}, {"id": "gf_item_19838407", "name": "Kyllingnuggets (5 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17786784", "name": "Mineralvann 0,5 l", "sizes": ["Standard"]}, {"id": "gf_item_17786787", "name": "Mineralvann 1,5 l", "sizes": ["Standard"]}], "sizes": ["Medium", "Stor", "Standard", "200gr + 200gr"], "extras": ["Biffkjøtt", "Kyllingkjøtt", "Kebabkjøtt", "Bacon", "Skinke", "Pepperoni", "Parmaskinke", "Jalapeño", "Paprika", "Sopp", "Løk", "Mais", "Ekstra ost", "Chips på toppen"], "sauces": ["Hvitløkssaus", "Béarnaisesaus"]};
+const byId = id => document.getElementById(id);
+const cart = [];
+const ink = byId('ink');
+const pen = ink.getContext('2d');
+let strokes = [];
+let pageTop = 0;
+let pointer = null;
+
+function trace(context, paths, xScale, yOffset) {
+  for (const path of paths) {
+    const [first,...rest] = path;
+    context.beginPath();
+    const x = first.x*xScale, y = first.y-yOffset;
+    if (!rest.length) {
+      context.arc(x,y,1.2,0,Math.PI*2);
+      context.fill();
+      continue;
+    }
+    context.moveTo(x,y);
+    for (const point of rest) context.lineTo(point.x*xScale,point.y-yOffset);
+    context.stroke();
+  }
+}
+function redraw() {
+  if (ink.hidden) return;
+  const width = ink.clientWidth, height = ink.clientHeight;
+  const dpi = window.devicePixelRatio || 1;
+  if (ink.width !== Math.round(width*dpi)) ink.width = Math.round(width*dpi);
+  if (ink.height !== Math.round(height*dpi)) ink.height = Math.round(height*dpi);
+  ink.style.setProperty('--ink-offset',(-pageTop % 34) + 'px');
+  pen.setTransform(dpi,0,0,dpi,0,0);
+  pen.clearRect(0,0,width,height);
+  pen.strokeStyle = pen.fillStyle = '#f2faf4';
+  pen.lineCap = pen.lineJoin = 'round';
+  pen.lineWidth = 2.4;
+  trace(pen,strokes,width,pageTop);
+}
+new ResizeObserver(redraw).observe(ink);
+function point(event) {
+  const rect = ink.getBoundingClientRect();
+  const clip = (number,max) => Math.min(max,Math.max(0,number));
+  return {x:clip(event.clientX-rect.left,rect.width)/rect.width,y:clip(event.clientY-rect.top,rect.height)+pageTop};
+}
+ink.addEventListener('pointerdown',event => {
+  if (pointer !== null || !event.isPrimary || event.button !== 0) return;
+  event.preventDefault();
+  pointer = event.pointerId;
+  ink.setPointerCapture(pointer);
+  if (editing) {
+    transcript = [];
+    renderCorrections('',0);
+  } else clearTranscript();
+  strokes.push([point(event)]);
+  redraw();
+});
+ink.addEventListener('pointermove',event => {
+  if (event.pointerId !== pointer) return;
+  const samples = event.getCoalescedEvents?.();
+  for (const sample of samples?.length ? samples : [event]) strokes.at(-1).push(point(sample));
+  redraw();
+});
+for (const type of ['pointerup','pointercancel','lostpointercapture']) {
+  ink.addEventListener(type,event => { if (event.pointerId === pointer) pointer = null; });
+}
+byId('undo').onclick = () => {
+  if (pointer !== null || !strokes.length) return;
+  clearTranscript();
+  strokes.pop();
+  if (!strokes.length) pageTop = 0;
+  redraw();
+};
+function inkImage(paths) {
+  const width = Math.max(ink.clientWidth,320);
+  let left = width, right = 0, top = Infinity, bottom = 0;
+  for (const path of paths) for (const p of path) {
+    left = Math.min(left,p.x*width); right = Math.max(right,p.x*width);
+    top = Math.min(top,p.y); bottom = Math.max(bottom,p.y);
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.ceil(right-left+16);
+  canvas.height = Math.ceil(bottom-top+16);
+  const context = canvas.getContext('2d');
+  context.fillStyle = '#fff';
+  context.fillRect(0,0,canvas.width,canvas.height);
+  context.strokeStyle = context.fillStyle = '#000';
+  context.translate(8-left,8);
+  context.lineWidth = 2.4;
+  context.lineCap = context.lineJoin = 'round';
+  trace(context,paths,width,top);
+  return canvas.toDataURL();
+}
+let editing = null;
+const normalize = value => value.normalize('NFKC').trim().toLocaleLowerCase('nb').replace(/\s+/g,' ');
+const nameOf = product => product.name.replace(/^\d+\.\s*/u,'');
+const aliases = {
+  "Classico": [
+    "classic",
+    "klassisk"
+  ],
+  "Al Capone": [
+    "capone",
+    "alcapone"
+  ],
+  "Sjefens favoritt": [
+    "sjefen",
+    "sjef",
+    "favoritt"
+  ],
+  "Mexican Style": [
+    "mexican",
+    "mex",
+    "meksikansk"
+  ],
+  "Kebabpizza": [
+    "kebab pizza",
+    "k pizza",
+    "kp"
+  ],
+  "Kyllingpizza": [
+    "kylling pizza",
+    "ky pizza",
+    "chicken pizza"
+  ],
+  "Calzone (innbakt pizza)": [
+    "calzone",
+    "innbakt"
+  ],
+  "Ciao Ciao": [
+    "ciao",
+    "ciaociao"
+  ],
+  "Pollo Marina": [
+    "pollo",
+    "marina"
+  ],
+  "Lag din egen pizza": [
+    "egen pizza",
+    "lag selv"
+  ],
+  "Hvitløksdressing": [
+    "hvitløk dressing",
+    "garlic dressing"
+  ],
+  "Béarnaisesaus": [
+    "bearnaise",
+    "bea saus",
+    "bearnaise saus"
+  ],
+  "Kebabrull": [
+    "k rull",
+    "kr",
+    "kebab rull"
+  ],
+  "Kyllingkebabrull": [
+    "ky rull",
+    "kylling rull",
+    "kylling kebabrull",
+    "chicken roll",
+    "kyllingkebab rull"
+  ],
+  "Kebabtallerken": [
+    "k tall",
+    "kt",
+    "kebab tall",
+    "kebab tallerken"
+  ],
+  "Kyllingkebabtallerken": [
+    "ky tall",
+    "kylling tall",
+    "kyllingkebab tall",
+    "kyllingkebab tallerken"
+  ],
+  "Kebab i pita": [
+    "k pita",
+    "kebab pita"
+  ],
+  "Kyllingkebab i pita": [
+    "ky pita",
+    "kylling pita",
+    "kyllingkebab pita"
+  ],
+  "Dobbel burger": [
+    "dobbel",
+    "double",
+    "double burger"
+  ],
+  "Hamburger Tallerken": [
+    "h tall",
+    "ham tall",
+    "hamburger",
+    "hamburger tall"
+  ],
+  "Cheeseburger Tallerken": [
+    "cheese",
+    "cheeseburger",
+    "cheese tall",
+    "osteburger"
+  ],
+  "BBQ Bacon Cheese Tallerken": [
+    "bbq",
+    "bbq bacon",
+    "bbq burger",
+    "bacon cheese"
+  ],
+  "BlåmuggostBurger Tallerken": [
+    "blue",
+    "blue burger",
+    "blå",
+    "blåmuggost",
+    "blåmuggost burger",
+    "blå burger",
+    "blue cheese",
+    "blue cheese burger"
+  ],
+  "Nachosburger Tallerken": [
+    "nachos",
+    "nachos burger",
+    "nachosburger"
+  ],
+  "Parmaburger Tallerken": [
+    "parma burger",
+    "parma tall",
+    "parmaburger"
+  ],
+  "Pommes frites": [
+    "pommes",
+    "fries",
+    "chips"
+  ],
+  "Søtpotetfries": [
+    "søtpotet",
+    "sweet potato fries"
+  ],
+  "Mozzarellasticks (5 stk.)": [
+    "mozzarella sticks",
+    "mozzarellasticks",
+    "mozza sticks"
+  ],
+  "Løkringer (6 stk.)": [
+    "løkringer",
+    "onion rings"
+  ],
+  "Biffsnadder": [
+    "biff snadder",
+    "b snadder"
+  ],
+  "Kyllingsnadder": [
+    "ky snadder",
+    "kylling snadder",
+    "chicken snadder"
+  ],
+  "Hvitløksnadder": [
+    "hvitløk snadder"
+  ],
+  "Fish and chips": [
+    "fish chips",
+    "fish & chips",
+    "fish"
+  ],
+  "Løvstek": [
+    "løv stek"
+  ],
+  "Kyllingsalat": [
+    "ky salat",
+    "kylling salat",
+    "chicken salad"
+  ],
+  "Skinkesalat": [
+    "skinke salat"
+  ],
+  "Vegetarburger": [
+    "veg burger",
+    "veggie burger",
+    "veggieburg"
+  ],
+  "Vegetarpizza": [
+    "veg pizza",
+    "veggie pizza"
+  ],
+  "Barneburger": [
+    "barn burger",
+    "kids burger"
+  ],
+  "Barnepizza": [
+    "barn pizza",
+    "kids pizza"
+  ],
+  "Kyllingnuggets (5 stk.)": [
+    "nuggets",
+    "chicken nuggets",
+    "kylling nuggets"
+  ],
+  "Mineralvann 0,5 l": [
+    "brus 0,5",
+    "liten brus",
+    "brus 0.5"
+  ],
+  "Mineralvann 1,5 l": [
+    "brus 1,5",
+    "stor brus",
+    "brus 1.5"
+  ]
+};
+const fold = text => normalize(text).normalize('NFD').replace(/\p{Mark}/gu,'').replace(/ø/g,'o').replace(/æ/g,'ae');
+const escapePattern = text => text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const compactName = value => fold(value).replace(/[^a-z0-9]/g,'');
+const genericWords = new Set(['pizza','burger','tallerken','rull','salat','saus','dressing','frites','fries','chips','snadder','stek','mineralvann','pita','med','og','i','and','stk','l']);
+function menuWords(name) {
+  return fold(name.replace(/\([^)]*\)/g,''))
+    .replace(/(kylling)(?=kebab)/g,'$1 ')
+    .replace(/([a-z])(?=(?:pizza|burger|tallerken|rull|salat|saus|dressing|fries|snadder|stek)\b)/g,'$1 ')
+    .match(/[a-z]+/g) || [];
+}
+function inferredKeys(name) {
+  const words = menuWords(name);
+  const significant = words.filter(word=>!['og','med','i','and'].includes(word));
+  const keys = new Set();
+  if (words.length>1) keys.add(words.join(' ')).add(words.join(''));
+  if (significant.length>1) {
+    keys.add(significant.map(word=>word[0]).join(''));
+    const first = significant[0];
+    const last = significant.at(-1);
+    keys.add(first+' '+last);
+    if (last==='tallerken') keys.add(first+' tall');
+    if (first.length>2) keys.add(first+' '+last[0]);
+  }
+  for (const word of significant) if (word.length>=4 && !genericWords.has(word)) keys.add(word);
+  return [...keys];
+}
+const rules = catalog.products.flatMap(product => {
+  const name = nameOf(product);
+  const keys = new Map(inferredKeys(name).map(key=>[key,0]));
+  for (const key of aliases[name] || []) keys.set(key,1);
+  keys.set(product.name,2).set(name,2);
+  const number = product.name.match(/^(\d+)\./)?.[1];
+  if (number) for (const key of [number,'nr '+number,'pizza '+number]) keys.set(key,2);
+  return [...keys].map(([key,priority]) => ({
+    product,priority,
+    spelling: compactName(key),
+    pattern: new RegExp('^'+fold(key).split(' ').map(escapePattern).join('[ .-]+')+'(?=$|[\\s,;+−-]|[x×]\\s*\\d)','u')
+  }));
+});
+function productMatches(text) {
+  const folded = fold(text);
+  let bestLength = 0;
+  let bestPriority = -1;
+  const hits = new Map();
+  for (const {product,pattern,priority} of rules) {
+    const match = folded.match(pattern);
+    if (!match) continue;
+    const length = match[0].length;
+    if (length<bestLength || (length===bestLength && priority<bestPriority)) continue;
+    if (length>bestLength || priority>bestPriority) hits.clear();
+    bestLength=length;
+    bestPriority=priority;
+    hits.set(JSON.stringify([nameOf(product),product.sizes]),product);
+  }
+  let end=0;
+  while (end<text.length && fold(text.slice(0,end)).length<bestLength) end++;
+  return [...hits.values()].map(product=>({product,tail:text.slice(end).trim()}));
+}
+function matchProduct(text) {
+  const hits = productMatches(text);
+  return hits.length===1 ? hits[0] : null;
+}
+
+function parseLine(source) {
+  let text = normalize(source)
+    .replace(/^((?:\d{1,2}\s*[x×]\s*)?)m\.?\s*(?=\d{1,2}(?!\d)(?:$|[\s,+−-]|[x×]\s*\d))/u,'$1medium ')
+    .replace(/^((?:\d{1,2}\s*[x×]\s*)?\d{1,2})\s*m\.?(?=$|[\s,+−-]|[x×]\s*\d)/u,'$1 medium');
+  const firstCount = text.match(/^(\d{1,2})\s*[x×]\s*/u);
+  if (firstCount) text = text.slice(firstCount[0].length);
+  const firstSize = text.match(/^(st\.?|stor|medium)\s+/u);
+  const match = matchProduct(firstSize ? text.slice(firstSize[0].length) : text);
+  if (!match) return null;
+  const {product} = match;
+  let tail = match.tail;
+  const earlyCount = tail.match(/^[x×]\s*(\d{1,2})(?=$|[\s,+−-])/u);
+  if (earlyCount) tail = tail.slice(earlyCount[0].length).trim();
+  let size = firstSize?.[1].startsWith('st') ? 'stor' : firstSize?.[1] || '';
+  const lastSize = tail.match(/^(st\.?|stor|medium(?!\s+(?:sos|saus)\b))(?=$|[\s,+−-]|[x×]\s*\d)/u);
+  if (lastSize) {
+    const value = lastSize[1].startsWith('st') ? 'stor' : 'medium';
+    if (size && size !== value) return null;
+    size = value;
+    tail = tail.slice(lastSize[0].length).trim();
+  }
+  const menuSize = product.sizes.find(option => normalize(option) === size);
+  if (size && !menuSize) return null;
+  const notes = [];
+  const sauce = tail.match(/^(med(?:ium(?:\s+(?:sos|saus))?)?|sterk(?:\s+saus)?|mild(?:\s+saus)?)(?=$|[\s,+−-]|[x×]\s*\d)/u);
+  if (sauce) {
+    notes.push(sauce[1].startsWith('med') ? 'Medium sos' : sauce[1].startsWith('sterk') ? 'Sterk saus' : 'Mild saus');
+    tail = tail.slice(sauce[0].length).trim();
+  }
+  const lastCount = tail.match(/^[x×]\s*(\d{1,2})(?=$|[\s,+−-])/u);
+  const counts = [firstCount,earlyCount,lastCount].filter(Boolean).map(value=>Number(value[1]));
+  if (new Set(counts).size > 1) return null;
+  const quantity = counts[0] ?? 1;
+  if (quantity < 1) return null;
+  if (lastCount) tail = tail.slice(lastCount[0].length).trim();
+  if (tail && !/^(?:[,;+−-]|\d{1,2}\s*[x×]|uten\b|ingen\b|ekstra\b|soğansız\b|sogansiz\b)/u.test(tail)) return null;
+  const pieces = tail.split(/[,;]|(?<![x×])\s+(?=[+−-]\s*\p{L})/u).map(note=>note.trim()).filter(Boolean);
+  const onion = new Map();
+  for (const piece of pieces) {
+    const m = piece.match(/^(?:(\d{1,2})\s*[x×]\s*)?([+−-]\s*l[øo]k|(?:ingen|uten|ekstra)\s+l[øo]k|soğansız|sogansiz)(?:\s*[x×]\s*(\d{1,2}))?$/u);
+    if (m) {
+      if (m[1] && m[3] && Number(m[1])!==Number(m[3])) return null;
+      const count = Number(m[1] || m[3] || quantity);
+      const extra = m[2].startsWith('+') || m[2].startsWith('ekstra');
+      if (!count || count > quantity || onion.has(extra) || count+(onion.get(!extra)||0)>quantity) return null;
+      onion.set(extra,count);
+      notes.push((count < quantity ? count + ' ' : '') + (extra ? 'Ekstra løk' : 'Uten løk'));
+    } else {
+      if (/\d\s*[x×]|[x×]\s*\d|^[−-]\s*$|^\+\s*$/u.test(piece)) return null;
+      const note = piece.replace(/^[−-]\s*/u,'uten ').replace(/^\+\s*/u,'').replace(/^ingen\s+/u,'uten ');
+      notes.push(note.replace(/^(?:chips|pommes(?: frites)?)(?: på toppen)?$/u,'pommes frites på toppen'));
+    }
+  }
+  return { source, quantity, name: [menuSize,nameOf(product)].filter(Boolean).join(' '), notes };
+}
+
+function searchMenuLine(source) {
+  if (source.includes('?') || source.length > 120) return null;
+  const clean = normalize(source);
+  const prefix = clean.match(/^(?:\d{1,2}\s*[x×]\s*)?(?:(?:st\.?|stor|medium)\s+)?/u)[0];
+  const remainder = clean.slice(prefix.length);
+  if (productMatches(remainder).length > 1) return null;
+  const boundary = remainder.search(/[,;+−]|-(?=\s*\p{L})|\s+(?=(?:\d{1,2}\s*[x×]|[x×]\s*\d|st\.?\b|stor\b|medium\b|med\b|mild\b|sterk\b|uten\b|ingen\b|ekstra\b))/u);
+  const head = boundary < 0 ? remainder : remainder.slice(0,boundary);
+  const tail = boundary < 0 ? '' : remainder.slice(boundary).trim();
+  if (!/^[\p{L}.\s]+$/u.test(head)) return null;
+  const hints = fold(head).match(/[a-z]+/g) || [];
+  if (hints.length < 2 || hints.length > 5 || hints.some(hint=>hint.length < 3)) return null;
+  const matches = new Map();
+  for (const product of catalog.products) {
+    const words = menuWords(nameOf(product));
+    const used = new Set();
+    if (!hints.map((hint,index)=>index).sort((a,b)=>hints[b].length-hints[a].length).every(index=>{
+      const word = words.find(token=>!used.has(token) && token.startsWith(hints[index]));
+      if (!word) return false;
+      used.add(word);
+      return true;
+    })) continue;
+    const row = parseLine([prefix+product.name,tail].filter(Boolean).join(' '));
+    if (row) matches.set(row.name,row);
+  }
+  return matches.size===1 ? matches.values().next().value : null;
+}
+
+function spellingDistance(a,b) {
+  let previous = Array.from({length:b.length+1},(_,i)=>i);
+  let earlier;
+  for (let i=1;i<=a.length;i++) {
+    const current = [i];
+    for (let j=1;j<=b.length;j++) {
+      current[j] = Math.min(previous[j]+1,current[j-1]+1,previous[j-1]+Number(a[i-1]!==b[j-1]));
+      if (i>1 && j>1 && a[i-1]===b[j-2] && a[i-2]===b[j-1]) {
+        current[j] = Math.min(current[j], earlier[j-2]+1);
+      }
+    }
+    earlier=previous;
+    previous=current;
+  }
+  return previous[b.length];
+}
+
+function similarOrders(source) {
+  const text = source.trim();
+  if (!text || text.length>120) return [];
+  const clean = normalize(text).replace(/\?+$/u,'').trim();
+  // A handwritten 1 can be transcribed as I or l.
+  const numeral = clean.match(/^(m\.?|st\.?|stor|medium)\s*[il](?=$|[\s,;+−-])/u);
+  const pepperoni = clean.match(/^(m\.?|st\.?|stor|medium)\s*(?:pep\.?|pepperoni)(?=$|[\s,;+−-]|[x×]\s*\d)/u);
+  if (numeral || pepperoni) {
+    const shorthand = numeral || pepperoni;
+    const size = shorthand[1].startsWith('m') ? 'Medium' : 'Stor';
+    const rest = clean.slice(shorthand[0].length).trim();
+    const replacement = size+' 1'+(rest ? ' '+rest : '')+(pepperoni ? ', bare pepperoni' : '');
+    const row = parseLine(replacement);
+    if (row) return [{row,replacement}];
+  }
+  const prefix = text.match(/^(?:(?:\d{1,2}\s*[x×]\s*)?(?:stor|medium)\s+|\d{1,2}\s*[x×]\s*)/iu)?.[0] || '';
+  const remainder = text.slice(prefix.length).replace(/\?+$/u,'').trimEnd();
+  const candidates = new Map();
+  const exact = productMatches(normalize(remainder));
+  if (exact.length>1) {
+    return exact.map(({product,tail}) => {
+      const replacement = [prefix+product.name,tail].filter(Boolean).join(' ');
+      return {row:parseLine(replacement),replacement};
+    }).filter(item=>item.row);
+  }
+  for (const word of remainder.matchAll(/[\p{L}]+(?=\s|[,;.+−-]|$)/gu)) {
+    const end = word.index+word[0].length;
+    const head = remainder.slice(0,end);
+    if (!/^[\p{L} .-]+$/u.test(head)) break;
+    const key = compactName(head);
+    if (key.length<4 || key.length>24) continue;
+    const maximum = key.length>=8 ? 2 : 1;
+    for (const {product,spelling} of rules) {
+      if (!/^[a-z]+$/.test(spelling) || Math.abs(spelling.length-key.length)>maximum) continue;
+      const distance = spellingDistance(key,spelling);
+      if (distance>maximum) continue;
+      const replacement = prefix+product.name+remainder.slice(end);
+      const row = parseLine(replacement);
+      if (!row) continue;
+      const score = distance / Math.max(key.length,spelling.length);
+      const label = row.name;
+      const other = candidates.get(label);
+      if (!other || score<other.score) candidates.set(label,{row,replacement,score});
+    }
+  }
+  return [...candidates.values()].sort((a,b)=>a.score-b.score).slice(0,2);
+}
+
+function renderCorrections(source,index) {
+  const area = byId('corrections');
+  const options = source ? similarOrders(source) : [];
+  area.replaceChildren(...options.map(({row,replacement}) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = row.quantity+'× '+row.name+(row.notes.length ? ' · '+row.notes.join(' · ') : '');
+    button.onclick = () => {
+      if (transcript[index]!==source) return;
+      transcript[index]=replacement;
+      submitTranscript();
+    };
+    return button;
+  }));
+  area.hidden = !options.length;
+}
+
+function updateCartVisibility() {
+  byId('cart').hidden = !cart.length && byId('status').hidden && byId('corrections').hidden;
+}
+function showStatus(message) {
+  const status = byId('status');
+  status.textContent = message;
+  status.hidden = !message;
+  updateCartVisibility();
+}
+let transcript = [];
+byId('next-line').onclick = () => {
+  if (pointer !== null || !strokes.length) return;
+  const bottom = strokes.reduce((max,path) => path.reduce((end,p) => Math.max(end,p.y),max),pageTop);
+  pageTop = Math.max(pageTop,Math.floor((bottom-44)/34)*34);
+  redraw();
+};
+function clearTranscript() {
+  transcript = [];
+  renderCorrections('',0);
+  showStatus('');
+}
+function resetEditor() {
+  editing = null;
+  clearTranscript();
+  strokes = [];
+  pageTop = 0;
+  pointer = null;
+  redraw();
+}
+byId('clear').onclick = resetEditor;
+let readingInk = false;
+let modelPromise;
+
+function groupInkLines(paths) {
+  const bounds = paths.map(path => {
+    let top = Infinity, bottom = -Infinity;
+    for (const point of path) {
+      top = Math.min(top,point.y);
+      bottom = Math.max(bottom,point.y);
+    }
+    return {path,top,bottom};
+  }).sort((a,b)=>a.top-b.top);
+  const lines = [];
+  for (const item of bounds) {
+    const last = lines.at(-1);
+    if (!last || item.top > last.bottom + 8) {
+      lines.push({paths:[item.path],bottom:item.bottom});
+    } else {
+      last.paths.push(item.path);
+      last.bottom = Math.max(last.bottom,item.bottom);
+    }
+  }
+  return lines.map(line=>line.paths);
+}
+
+function loadTrOCR(reportProgress) {
+  if (!modelPromise) {
+    modelPromise = import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2')
+      .then(({env,pipeline}) => {
+        env.allowLocalModels = false;
+        return pipeline('image-to-text','Xenova/trocr-small-handwritten',{
+          quantized:true,
+          progress_callback:reportProgress
+        });
+      }).catch(error=>{
+        modelPromise = null;
+        throw error;
+      });
+  }
+  return modelPromise;
+}
+
+async function readInk(paths) {
+  readingInk = true;
+  const button = byId('ok');
+  button.disabled = true;
+  button.setAttribute('aria-busy','true');
+  const snapshot = JSON.stringify(paths);
+  const stillCurrent = () => JSON.stringify(strokes) === snapshot;
+  const start = performance.now();
+  let phase = 'load';
+  try {
+    const images = groupInkLines(paths).map(inkImage);
+    showStatus('Klargjør TrOCR …');
+    const recognize = await loadTrOCR(progress => {
+      if (stillCurrent() && progress.status === 'progress' && Number.isFinite(progress.progress)) {
+        showStatus('Laster TrOCR · '+Math.round(progress.progress)+' %');
+      }
+    });
+    if (!stillCurrent()) return;
+    phase = 'read';
+    const ready = performance.now();
+    showStatus('Leser håndskriften …');
+    const lines = [];
+    for (const image of images) {
+      const result = await recognize(image,{max_new_tokens:64});
+      if (!stillCurrent()) return;
+      const text = result[0]?.generated_text?.trim();
+      lines.push(text || '?');
+    }
+    transcript = lines;
+    const added = submitTranscript();
+    const seconds = (value) => (value/1000).toFixed(1).replace('.',',');
+    if (added) {
+      const ended = performance.now();
+      showStatus('TrOCR: '+seconds(ended-ready)+' s · Totalt: '+seconds(ended-start)+' s');
+    }
+  } catch {
+    if (stillCurrent()) showStatus(phase==='load' ? 'TrOCR kunne ikke lastes. Prøv ✓ igjen.' : 'TrOCR kunne ikke lese håndskriften. Prøv igjen.');
+  } finally {
+    readingInk = false;
+    button.disabled = false;
+    button.removeAttribute('aria-busy');
+  }
+}
+
+function saveRows(rows) {
+  if (editing) cart.splice(cart.indexOf(editing),1,rows[0]);
+  else cart.push(...rows);
+  latest = rows.at(-1);
+  resetEditor();
+  render();
+}
+function submitTranscript() {
+  if (editing && transcript.length!==1) {
+    showStatus('Skriv én varelinje når du redigerer.');
+    return;
+  }
+  const rows = transcript.map(line=>line.includes('?') ? null : parseLine(line) || searchMenuLine(line));
+  const unknown = rows.indexOf(null);
+  if (unknown>=0) {
+    renderCorrections(transcript[unknown],unknown);
+    showStatus((byId('corrections').hidden ? 'Skriv linjen på nytt: ' : 'Mente du dette? Linje '+(unknown+1)+': ')+transcript[unknown]);
+    return;
+  }
+  saveRows(rows);
+  return true;
+}
+byId('ok').onclick = () => {
+  if (readingInk || pointer !== null) return;
+  if (!strokes.length) { showStatus('Skriv bestillingen først.'); return; }
+  if (transcript.length) { submitTranscript(); return; }
+  void readInk(strokes);
+};
+
+let latest = null;
+function makeItem(row, actionable) {
+  const li = document.createElement('li');
+  const content = document.createElement('div');
+  const title = document.createElement('strong');
+  title.textContent = row.quantity ? row.quantity + '× ' + row.name : row.name;
+  content.append(title);
+  if (row.notes.length) {
+    const notes = document.createElement('small');
+    notes.textContent = row.notes.join(' · ');
+    content.append(notes);
+  }
+  if (row.image) {
+    const image = document.createElement('img');
+    image.className = 'ink-preview';
+    image.alt = 'Håndskrevet merknad';
+    image.src = row.image;
+    content.append(image);
+  }
+  li.append(content);
+  if (!actionable) return li;
+  for (const [icon,label,css,action] of [
+    ['✎','Endre','',() => {
+      if (byId('basket').open) byId('basket').close();
+      editing = row;
+      clearTranscript();
+      strokes = row.ink ? row.ink.map(path => [...path]) : [];
+      pageTop = 0;
+      redraw();
+      render();
+      showStatus('Endrer '+row.quantity+'× '+row.name+(row.notes.length ? ' · '+row.notes.join(' · ') : '')+'. Skriv hele linjen og trykk ✓.');
+    }],
+    ['×','Fjern','remove',() => {
+      cart.splice(cart.indexOf(row),1);
+      if (editing === row) resetEditor();
+      if (latest === row) latest = cart.at(-1) || null;
+      render();
+    }]
+  ]) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'icon ' + css;
+    button.textContent = icon;
+    button.setAttribute('aria-label',label+' '+row.name);
+    button.onclick = action;
+    li.append(button);
+  }
+  return li;
+}
+function render() {
+  byId('latest').replaceChildren(...(latest ? [makeItem(latest,true)] : []));
+  byId('basket-lines').replaceChildren(...[...cart].reverse().map(row=>makeItem(row,true)));
+  byId('print-lines').replaceChildren(...cart.map(row=>makeItem(row,false)));
+  byId('all').hidden = !cart.length;
+  byId('total').hidden = !cart.length;
+  updateCartVisibility();
+  byId('all').textContent = 'Vis alle (' + cart.length + ')';
+  const raw = cart.filter(row=>!row.quantity).length;
+  byId('total').textContent = cart.reduce((sum,row)=>sum+row.quantity,0) + ' stk' + (raw ? ' · ' + raw + ' notat' : '');
+  byId('print').disabled = !cart.length;
+  byId('ok').setAttribute('aria-label',editing ? 'Lagre endring' : 'Legg til bestilling');
+}
+byId('all').onclick = () => byId('basket').showModal();
+byId('print').onclick = () => window.print();
+render();
+</script>
+</body>
+</html>
