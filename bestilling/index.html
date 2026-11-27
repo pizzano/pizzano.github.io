@@ -9,7 +9,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--page);color:var(--ink);font:16px system-ui,sans-serif}
-main{width:min(100%,39rem);height:100dvh;margin:auto;padding:10px 12px max(8px,env(safe-area-inset-bottom));display:grid;grid-template-rows:auto minmax(0,1fr) auto minmax(106px,.42fr) auto;gap:8px}
+main{width:100%;height:100dvh;margin:auto;padding:0 0 env(safe-area-inset-bottom);display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:0}
 h1,h2,p{margin:0}
 h1{font-size:clamp(19px,5vw,24px);letter-spacing:-.035em}
 h2{font-size:15px}
@@ -19,7 +19,7 @@ button{min-height:44px;padding:6px 12px;border:1px solid var(--line);border-radi
 button:disabled{opacity:.5;cursor:default}
 button:focus-visible{outline:2px solid #bf8b3b;outline-offset:2px}
 .primary{flex:1;color:white;background:var(--green);border-color:var(--green);font-size:18px}
-.notebook{position:relative;min-height:0;overflow:hidden;background:var(--dark);border-radius:14px;border:1px solid #284a3c}
+.notebook{position:relative;min-height:0;overflow:hidden;background:var(--dark)}
 #ink,textarea{display:block;width:100%;height:100%;background:repeating-linear-gradient(to bottom,var(--dark) 0 33px,#2b493e 33px 34px)}
 #ink{touch-action:none;cursor:crosshair;background-position:0 var(--ink-offset,0px)}
 textarea{resize:none;border:0;padding:12px 12px 64px;color:#f4faf6;caret-color:#9de2bc;font:20px/34px system-ui,sans-serif;background-origin:content-box;background-attachment:local}
@@ -28,9 +28,9 @@ textarea::placeholder{color:#b2c9bd}
 .tools button,#next-line{display:grid;place-items:center;width:44px;padding:0;color:#f4faf6;background:#214638;border-color:#3c6151}
 #next-line{position:absolute;bottom:8px;right:8px;color:var(--dark);background:#d9eddf}
 .icon-svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
-#cart{display:flex;flex-direction:column;gap:3px;min-height:0;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:auto;scrollbar-width:thin}
-#suggestion,#status,#empty-cart{font-size:13px;overflow-wrap:anywhere}
-#suggestion,#empty-cart{color:var(--muted)}
+#cart{display:flex;flex-direction:column;gap:3px;min-height:0;max-height:26dvh;padding:4px 6px;background:var(--paper);overflow:auto;scrollbar-width:thin}
+#suggestion,#status{font-size:13px;overflow-wrap:anywhere}
+#suggestion{color:var(--muted)}
 #status{color:#8a411e}
 #all{border:0;min-height:32px;padding:2px 4px;font-size:13px;color:var(--green)}
 ul{list-style:none;margin:0;padding:0}
@@ -40,7 +40,11 @@ li small{display:block;margin-top:2px;color:var(--muted)}
 #latest li{background:#e3f1e8;border-radius:9px}
 .icon{min-width:44px;padding:0;font-size:20px}
 .remove{color:#922f2f}
-footer{color:var(--muted);font-size:14px}
+footer{color:var(--muted);font-size:14px;gap:5px;padding:4px 6px;background:var(--page)}
+footer .tool-icon{display:grid;place-items:center;width:44px;padding:0}
+#total{white-space:nowrap;font-size:12px}
+#all{align-self:flex-end}
+@media(max-width:340px){#total{display:none}}
 footer .print-icon{display:grid;place-items:center;min-width:48px;background:var(--green);border-color:var(--green);color:white}
 .ink-preview{display:block;max-width:100%;max-height:90px;object-fit:contain;object-position:left}
 dialog{width:min(100% - 16px,38rem);max-height:82dvh;margin:auto auto 8px;border:1px solid var(--line);border-radius:16px;padding:12px;color:var(--ink);background:var(--paper)}
@@ -55,22 +59,23 @@ dialog::backdrop{background:#102a2380}
 </head>
 <body>
 <main>
-<header class="topbar"><h1>Manuell bestilling</h1><button id="menu" type="button">Meny</button></header>
 <div class="notebook">
 <canvas id="ink" aria-label="Skriv med penn, finger eller mus"></canvas>
 <textarea id="order" aria-label="Skriv bestillingen" hidden inputmode="none" autocomplete="off" spellcheck="false" placeholder="Skriv med S Pen"></textarea>
 <div class="tools"><button id="undo" type="button" aria-label="Angre siste strek" title="Angre siste strek"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5m-5-5h11a4 4 0 0 1 4 4v2"/></svg></button></div>
 <button id="next-line" type="button" aria-label="Bla opp og fortsett å skrive" title="Bla opp og fortsett å skrive"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4m-6 6 6-6 6 6"/></svg></button>
 </div>
-<nav><button id="clear" type="button">Tøm felt</button><button id="ok" class="primary" type="button">OK</button></nav>
-<section id="cart">
-<div class="heading"><h2>Bestilling</h2><button id="all" type="button" hidden>Vis alle</button></div>
+<section id="cart" aria-label="Bestilling" hidden>
+<button id="all" type="button" hidden>Vis alle</button>
 <p id="suggestion" aria-live="polite" hidden></p>
 <p id="status" role="status" hidden></p>
-<p id="empty-cart">Ingen varer lagt til.</p>
 <ul id="latest"></ul>
 </section>
-<footer><span id="total">0 stk</span><button id="print" class="print-icon" type="button" aria-label="Skriv ut bestillingen" title="Skriv ut bestillingen" disabled><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6zM17 12h1"/></svg></button></footer>
+<footer aria-label="Bestillingshandlinger">
+<button id="menu" class="tool-icon" type="button" aria-label="Meny" title="Meny"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg></button>
+<button id="clear" class="tool-icon" type="button" aria-label="Tøm felt" title="Tøm felt"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg></button>
+<button id="ok" class="primary" type="button">OK</button>
+<span id="total" hidden></span><button id="print" class="print-icon" type="button" aria-label="Skriv ut bestillingen" title="Skriv ut bestillingen" disabled><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6zM17 12h1"/></svg></button></footer>
 </main>
 <dialog id="menu-dialog">
 <div class="sheet-top"><h2>Meny</h2><form method="dialog"><button aria-label="Lukk menyen">×</button></form></div>
@@ -525,6 +530,9 @@ function parseLine(source) {
   return { source, quantity, name: [menuSize,nameOf(product)].filter(Boolean).join(' '), notes };
 }
 
+function updateCartVisibility() {
+  byId('cart').hidden = !cart.length && byId('suggestion').hidden && byId('status').hidden;
+}
 function displaySuggestion() {
   const text = textMode ? order.value.trim() : '';
   const candidate = text ? parseLine(text.split(/\r?\n/u).at(-1)) : null;
@@ -532,11 +540,13 @@ function displaySuggestion() {
   suggestion.hidden = !candidate;
   suggestion.textContent = candidate ? 'Forslag: ' + candidate.quantity + '× ' + candidate.name + (candidate.notes.length ? ' · ' + candidate.notes.join(' · ') : '') : '';
   byId('status').hidden = true;
+  updateCartVisibility();
 }
 function showStatus(message) {
   const status = byId('status');
   status.textContent = message;
   status.hidden = !message;
+  updateCartVisibility();
 }
 order.addEventListener('compositionstart', () => { composing = true; });
 order.addEventListener('compositionend', () => { composing = false; displaySuggestion(); });
@@ -659,7 +669,7 @@ byId('ok').onclick = () => {
   if (!textMode) {
     if (pointer !== null || !strokes.length) { showStatus('Skriv bestillingen først.'); return; }
     const row = recognizeSavedProduct(strokes);
-    if (!row) { showStatus('Ukjent vare. Velg fra Meny eller skriv på nytt.'); return; }
+    if (!row) { showStatus('Ukjent vare. Håndskriften er beholdt.'); return; }
     if (editing) cart.splice(cart.indexOf(editing),1,row);
     else cart.push(row);
     latest = row;
@@ -739,7 +749,8 @@ function render() {
   byId('basket-lines').replaceChildren(...[...cart].reverse().map(row=>makeItem(row,true)));
   byId('print-lines').replaceChildren(...cart.map(row=>makeItem(row,false)));
   byId('all').hidden = !cart.length;
-  byId('empty-cart').hidden = Boolean(cart.length);
+  byId('total').hidden = !cart.length;
+  updateCartVisibility();
   byId('all').textContent = 'Vis alle (' + cart.length + ')';
   const raw = cart.filter(row=>!row.quantity).length;
   byId('total').textContent = cart.reduce((sum,row)=>sum+row.quantity,0) + ' stk' + (raw ? ' · ' + raw + ' notat' : '');
