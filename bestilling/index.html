@@ -452,33 +452,64 @@ const aliases = {
 const fold = text => normalize(text).normalize('NFD').replace(/\p{Mark}/gu,'').replace(/ø/g,'o').replace(/æ/g,'ae');
 const escapePattern = text => text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 const compactName = value => fold(value).replace(/[^a-z0-9]/g,'');
+const genericWords = new Set(['pizza','burger','tallerken','rull','salat','saus','dressing','frites','fries','chips','snadder','stek','mineralvann','pita','med','og','i','and','stk','l']);
+function menuWords(name) {
+  return fold(name.replace(/\([^)]*\)/g,''))
+    .replace(/(kylling)(?=kebab)/g,'$1 ')
+    .replace(/([a-z])(?=(?:pizza|burger|tallerken|rull|salat|saus|dressing|fries|snadder|stek)\b)/g,'$1 ')
+    .match(/[a-z]+/g) || [];
+}
+function inferredKeys(name) {
+  const words = menuWords(name);
+  const significant = words.filter(word=>!['og','med','i','and'].includes(word));
+  const keys = new Set();
+  if (words.length>1) keys.add(words.join(' ')).add(words.join(''));
+  if (significant.length>1) {
+    keys.add(significant.map(word=>word[0]).join(''));
+    const first = significant[0];
+    const last = significant.at(-1);
+    keys.add(first+' '+last);
+    if (last==='tallerken') keys.add(first+' tall');
+    if (first.length>2) keys.add(first+' '+last[0]);
+  }
+  for (const word of significant) if (word.length>=4 && !genericWords.has(word)) keys.add(word);
+  return [...keys];
+}
 const rules = catalog.products.flatMap(product => {
   const name = nameOf(product);
-  const keys = new Set([product.name,name,...(aliases[name] || [])]);
+  const keys = new Map(inferredKeys(name).map(key=>[key,0]));
+  for (const key of aliases[name] || []) keys.set(key,1);
+  keys.set(product.name,2).set(name,2);
   const number = product.name.match(/^(\d+)\./)?.[1];
-  if (number) keys.add(number).add('nr '+number).add('pizza '+number);
-  return [...keys].map(key => ({
-    product,
+  if (number) for (const key of [number,'nr '+number,'pizza '+number]) keys.set(key,2);
+  return [...keys].map(([key,priority]) => ({
+    product,priority,
     spelling: compactName(key),
     pattern: new RegExp('^'+fold(key).split(' ').map(escapePattern).join('[ .-]+')+'(?=$|[\\s,;+−-]|[x×]\\s*\\d)','u')
   }));
 });
-function matchProduct(text) {
+function productMatches(text) {
   const folded = fold(text);
-  const hits = rules.flatMap(({product,pattern}) => {
+  let bestLength = 0;
+  let bestPriority = -1;
+  const hits = new Map();
+  for (const {product,pattern,priority} of rules) {
     const match = folded.match(pattern);
-    return match ? [{product,length:match[0].length}] : [];
-  });
-  if (!hits.length) return null;
-  const length = Math.max(...hits.map(hit=>hit.length));
-  const best = hits.filter(hit=>hit.length===length);
-  const {product} = best[0];
-  if (best.some(hit=>nameOf(hit.product)!==nameOf(product) ||
-      JSON.stringify(hit.product.sizes)!==JSON.stringify(product.sizes))) return null;
-  // Folded accented letters retain their positions except æ, which folds to two characters.
+    if (!match) continue;
+    const length = match[0].length;
+    if (length<bestLength || (length===bestLength && priority<bestPriority)) continue;
+    if (length>bestLength || priority>bestPriority) hits.clear();
+    bestLength=length;
+    bestPriority=priority;
+    hits.set(JSON.stringify([nameOf(product),product.sizes]),product);
+  }
   let end=0;
-  while (end<text.length && fold(text.slice(0,end)).length<length) end++;
-  return {product,tail:text.slice(end).trim()};
+  while (end<text.length && fold(text.slice(0,end)).length<bestLength) end++;
+  return [...hits.values()].map(product=>({product,tail:text.slice(end).trim()}));
+}
+function matchProduct(text) {
+  const hits = productMatches(text);
+  return hits.length===1 ? hits[0] : null;
 }
 
 function parseLine(source) {
@@ -558,6 +589,13 @@ function similarOrders(source) {
   const prefix = text.match(/^(?:(?:\d{1,2}\s*[x×]\s*)?(?:stor|medium)\s+|\d{1,2}\s*[x×]\s*)/iu)?.[0] || '';
   const remainder = text.slice(prefix.length);
   const candidates = new Map();
+  const exact = productMatches(normalize(remainder));
+  if (exact.length>1) {
+    return exact.map(({product,tail}) => {
+      const replacement = [prefix+product.name,tail].filter(Boolean).join(' ');
+      return {row:parseLine(replacement),replacement};
+    }).filter(item=>item.row).slice(0,4);
+  }
   for (const word of remainder.matchAll(/[\p{L}]+(?=\s|[,;.+−-]|$)/gu)) {
     const end = word.index+word[0].length;
     const head = remainder.slice(0,end);
