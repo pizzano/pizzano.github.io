@@ -860,11 +860,212 @@ function render() {
   byId('all').textContent = 'Vis alle (' + cart.length + ')';
   const raw = cart.filter(row=>!row.quantity).length;
   byId('total').textContent = cart.reduce((sum,row)=>sum+row.quantity,0) + ' stk' + (raw ? ' · ' + raw + ' notat' : '');
-  byId('print').disabled = !cart.length;
+  byId('print').disabled = printing || !cart.length;
   byId('ok').setAttribute('aria-label',editing ? 'Lagre endring' : 'Legg til bestilling');
 }
 byId('all').onclick = () => byId('basket').showModal();
-byId('print').onclick = () => window.print();
+const EPSON_DEFAULT = {
+  host: '192.168.1.25',
+  scheme: 'https',
+  deviceId: 'local_printer'
+};
+const EPOS_NS = 'http://www.epson-pos.com/schemas/2011/03/epos-print';
+
+const RASTER_WIDTH = 576;
+function renderManualReceipt(rows) {
+  if (!rows.length) throw Error('Ingen varer å skrive ut.');
+  const canvas = document.createElement('canvas');
+  canvas.width = RASTER_WIDTH;
+  canvas.height = 100;
+  const c = canvas.getContext('2d', {willReadFrequently:true});
+  if (!c) throw Error('Kan ikke tegne bestillingslappen.');
+  const left=6, qty=83, check=510, right=570;
+  const font=(size,bold=false)=>{c.font=(bold?'700 ':'400 ')+size+'px Arial, sans-serif';};
+  const wrap=(value,width,size,bold=false)=>{
+    font(size,bold);
+    const out=[];
+    for(const paragraph of String(value ?? '').split(/\r?\n/)){
+      let line='';
+      for(const word of paragraph.trim().split(/\s+/).filter(Boolean)){
+        const next=line?line+' '+word:word;
+        if(line&&c.measureText(next).width>width){out.push(line);line=word;}else line=next;
+        while(line.length>1&&c.measureText(line).width>width){
+          let n=line.length-1;
+          while(n>1&&c.measureText(line.slice(0,n)).width>width)n--;
+          out.push(line.slice(0,n));line=line.slice(n);
+        }
+      }
+      if(line)out.push(line);
+    }
+    return out.length?out:[''];
+  };
+  const entries=rows.map(row=>{
+    const names=wrap(row.name,check-qty-20,36,true);
+    const notes=(row.notes||[]).flatMap(note=>wrap('– '+note,check-qty-20,29,true));
+    return {quantity:row.quantity?String(row.quantity)+'x':'—',names,notes,height:Math.max(68,20+names.length*43+notes.length*35)};
+  });
+  const tableTop=155, headerHeight=48;
+  const bottom=tableTop+headerHeight+entries.reduce((n,row)=>n+row.height,0);
+  if(bottom+85>24000)throw Error('Bestillingen er for lang for én utskrift.');
+  canvas.height=bottom+85;
+  c.fillStyle='#fff';c.fillRect(0,0,canvas.width,canvas.height);
+  c.fillStyle='#000';c.strokeStyle='#000';c.lineWidth=3;c.textBaseline='top';
+  const center=(value,x,y,size,bold=false,maxWidth=550)=>{
+    font(size,bold);c.textAlign='center';c.fillText(value,x,y,maxWidth);c.textAlign='left';
+  };
+  const line=(x1,y1,x2,y2)=>{c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();};
+  center('KJØKKENBESTILLING',288,12,44,true);
+  center('MANUELL BESTILLING',288,64,29,true);
+  center(new Intl.DateTimeFormat('nb-NO',{timeZone:'Europe/Oslo',dateStyle:'short',timeStyle:'short'}).format(new Date()),288,106,28);
+  c.fillRect(left,tableTop,right-left,headerHeight);
+  c.fillStyle='#fff';
+  center('ANT.',(left+qty)/2,tableTop+10,26,true,qty-left-6);
+  font(29,true);c.fillText('VARE',qty+10,tableTop+8);
+  center('OK',(check+right)/2,tableTop+10,24,true,right-check-6);
+  c.fillStyle='#000';
+  let y=tableTop+headerHeight;
+  for(const entry of entries){
+    center(entry.quantity,(left+qty)/2,y+12,35,true,qty-left-8);
+    let textY=y+10;
+    font(36,true);
+    for(const name of entry.names){c.fillText(name,qty+10,textY);textY+=43;}
+    font(29,true);
+    for(const note of entry.notes){c.fillText(note,qty+10,textY);textY+=35;}
+    c.strokeRect(check+(right-check-31)/2,y+16,31,31);
+    y+=entry.height;line(left,y,right,y);
+  }
+  line(left,tableTop,left,bottom);line(qty,tableTop+headerHeight,qty,bottom);
+  line(check,tableTop+headerHeight,check,bottom);line(right,tableTop,right,bottom);
+  font(32,true);
+  const total=rows.reduce((sum,row)=>sum+(Number(row.quantity)||0),0);
+  c.fillText('Totalt: '+total+' stk',left+4,bottom+19);
+  return canvas;
+}
+function packed1BitRaster(canvas) {
+  const width = canvas.width;
+  const rowBytes = width / 8;
+  if (!Number.isInteger(rowBytes)) throw new Error('Bitmap-bredden må deles på åtte.');
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  const chunkHeight = 320; // Keep each ePOS image chunk reasonably small.
+  const images = [];
+
+  for (let top = 0; top < canvas.height; top += chunkHeight) {
+    const height = Math.min(chunkHeight, canvas.height - top);
+    const rgba = context.getImageData(0, top, width, height).data;
+    const bytes = new Uint8Array(rowBytes * height);
+    for (let yy = 0; yy < height; yy++) {
+      const row = yy * width;
+      const packedRow = yy * rowBytes;
+      for (let xx = 0; xx < width; xx++) {
+        const i = (row + xx) * 4;
+        const luminance = (rgba[i] * 299 + rgba[i + 1] * 587 + rgba[i + 2] * 114) / 1000;
+        // Black = 1, white = 0. Anti-aliasing is thresholded for thermal printing.
+        if (rgba[i + 3] > 128 && luminance < 170) {
+          bytes[packedRow + (xx >> 3)] |= 0x80 >> (xx & 7);
+        }
+      }
+    }
+    // ePOS-Print XML <image> requires base64 of packed raster bytes,
+    // not base64 of a PNG/JPEG file.
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 8192) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+    }
+    images.push('<image width="' + width + '" height="' + height +
+      '" color="color_1" mode="mono" align="center">' + btoa(binary) + '</image>');
+  }
+  return images.join('') + '<feed line="3"/><cut type="feed"/>';
+}
+
+function printerSettings() {
+  let host = EPSON_DEFAULT.host;
+  let scheme = EPSON_DEFAULT.scheme;
+  let deviceId = EPSON_DEFAULT.deviceId;
+  // Reuse values set on the independent demo printer test page when available.
+  try {
+    host = localStorage.getItem('kol_test_printer_ip') || host;
+    scheme = localStorage.getItem('kol_test_printer_scheme') || scheme;
+    deviceId = localStorage.getItem('kol_test_printer_device') || deviceId;
+  } catch {}
+  if (!/^\d{1,3}(?:\.\d{1,3}){3}$/.test(host) || host.split('.').some(part => Number(part) > 255)) {
+    throw new Error('Ugyldig IP-adresse for kvitteringsskriver.');
+  }
+  if (!['http', 'https'].includes(scheme) || !/^[\w-]{1,48}$/.test(deviceId)) {
+    throw new Error('Ugyldige skriverinnstillinger.');
+  }
+  return { host, scheme, deviceId };
+}
+
+async function printManualTicket(rows) {
+  const config = printerSettings();
+  const endpoint = config.scheme + '://' + config.host +
+    '/cgi-bin/epos/service.cgi?devid=' + encodeURIComponent(config.deviceId) + '&timeout=10000';
+  const content = packed1BitRaster(renderManualReceipt(rows));
+  // Epson TM-T20II ePOS-Print 5.0: send SOAP directly to the configured printer.
+  const body = '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>' +
+    '<epos-print xmlns="' + EPOS_NS + '">' + content +
+    '</epos-print></s:Body></s:Envelope>';
+
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 15000);
+  let response;
+  try {
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/xml; charset=utf-8', SOAPAction: '""' },
+      body,
+      cache: 'no-store',
+      signal: controller.signal
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status + ' fra Epson.');
+    const returned = await response.text();
+    const documentXml = new DOMParser().parseFromString(returned, 'text/xml');
+    if (documentXml.querySelector('parsererror')) throw new Error('Ugyldig svar fra Epson.');
+    const responses = documentXml.getElementsByTagNameNS(EPOS_NS, 'response');
+    const node = responses[0] || documentXml.getElementsByTagName('response')[0];
+    if (!node) throw new Error('Ingen ePOS-bekreftelse fra skriveren.');
+    if (!['true', '1'].includes(String(node.getAttribute('success')))) {
+      throw new Error('Epson-feil: ' + (node.getAttribute('code') || 'Ukjent skriverfeil'));
+    }
+    return true;
+  } catch (error) {
+    if (error.name === 'AbortError') throw new Error('Tidsavbrudd: Sjekk om lappen ble skrevet ut før du prøver igjen.');
+    if (error instanceof TypeError) throw new Error('Utskrift ikke bekreftet. Sjekk Epson, samme Wi-Fi, IP og HTTPS før du prøver igjen.');
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+
+
+
+let printing = false;
+byId('print').onclick = async () => {
+  if (printing || !cart.length) return;
+  if (readingInk || pointer !== null || editing || strokes.length || transcript.length) {
+    showStatus('Fullfør eller tøm håndskriften før utskrift.');
+    return;
+  }
+  printing = true;
+  const button = byId('print');
+  button.disabled = true;
+  button.setAttribute('aria-busy','true');
+  const rows = cart.map(row=>({...row,notes:[...(row.notes||[])]}));
+  showStatus('Skriver ut…');
+  try {
+    await printManualTicket(rows);
+    showStatus('Utskrift bekreftet av Epson.');
+  } catch (error) {
+    showStatus(error.message || 'Utskrift ikke bekreftet. Sjekk skriveren.');
+  } finally {
+    printing = false;
+    button.removeAttribute('aria-busy');
+    button.disabled = !cart.length;
+  }
+};
+
 render();
 </script>
 </body>
