@@ -516,14 +516,14 @@ function parseLine(source) {
   let text = normalize(source);
   const firstCount = text.match(/^(\d{1,2})\s*[x×]\s*/u);
   if (firstCount) text = text.slice(firstCount[0].length);
-  const firstSize = text.match(/^(stor|medium)\s+/u);
+  const firstSize = text.match(/^(st\.?|stor|medium)\s+/u);
   const match = matchProduct(firstSize ? text.slice(firstSize[0].length) : text);
   if (!match) return null;
   const {product} = match;
   let tail = match.tail;
   const earlyCount = tail.match(/^[x×]\s*(\d{1,2})(?=$|[\s,+−-])/u);
   if (earlyCount) tail = tail.slice(earlyCount[0].length).trim();
-  let size = firstSize?.[1] || '';
+  let size = firstSize?.[1].startsWith('st') ? 'stor' : firstSize?.[1] || '';
   const lastSize = tail.match(/^(st\.?|stor|medium(?!\s+(?:sos|saus)\b))(?=$|[\s,+−-]|[x×]\s*\d)/u);
   if (lastSize) {
     const value = lastSize[1].startsWith('st') ? 'stor' : 'medium';
@@ -776,9 +776,68 @@ function recognizeSavedProduct(paths) {
   return {source:best.product,name:best.product,quantity:1,notes:[]};
 }
 
+const connection = new URLSearchParams(location.hash.slice(1));
+const suppliedEndpoint = connection.get('gemini');
+const suppliedToken = connection.get('access');
+let recognition = null;
+let readingInk = false;
+try {
+  if (suppliedEndpoint && suppliedToken) {
+    const url = new URL(suppliedEndpoint);
+    if (url.protocol === 'https:' && url.hostname.endsWith('.workers.dev') && !url.username && !url.password) {
+      recognition = {endpoint:url.href,token:suppliedToken};
+      sessionStorage.setItem('bestilling-gemini',JSON.stringify(recognition));
+      history.replaceState(null,'',location.pathname+location.search);
+    }
+  } else {
+    recognition = JSON.parse(sessionStorage.getItem('bestilling-gemini') || 'null');
+  }
+} catch {}
+
+async function readInk(paths) {
+  readingInk = true;
+  const button = byId('ok');
+  button.disabled = true;
+  button.textContent = 'Leser…';
+  try {
+    const image = inkImage(paths);
+    const response = await fetch(recognition.endpoint,{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+recognition.token},
+      body:JSON.stringify({image:image.split(',')[1]}),
+      signal:AbortSignal.timeout(15000)
+    });
+    if (!response.ok) throw Error('Recognition failed');
+    const {text} = await response.json();
+    if (strokes !== paths || textMode || inkImage(paths) !== image) return;
+    if (typeof text !== 'string' || !text.trim()) { showStatus('Kunne ikke lese håndskriften.'); return; }
+    const lines = text.trim().split(/\r?\n/u).filter(line=>line.trim());
+    const rows = lines.map(line => line.includes('?') ? null : parseLine(line));
+    if (rows.some(row=>!row) || (editing && rows.length!==1)) {
+      order.value = text;
+      openMode(true);
+      showStatus('Kontroller den leste teksten før du legger til.');
+      return;
+    }
+    if (editing) cart.splice(cart.indexOf(editing),1,rows[0]);
+    else cart.push(...rows);
+    latest = rows.at(-1);
+    resetEditor();
+    render();
+  } catch {
+    if (strokes === paths) showStatus('Kunne ikke lese nå. Håndskriften er beholdt.');
+  } finally {
+    readingInk = false;
+    button.disabled = false;
+    button.textContent = editing ? 'Lagre' : 'OK';
+  }
+}
+
 byId('ok').onclick = () => {
+  if (readingInk) return;
   if (!textMode) {
     if (pointer !== null || !strokes.length) { showStatus('Skriv bestillingen først.'); return; }
+    if (recognition) { void readInk(strokes); return; }
     const row = recognizeSavedProduct(strokes);
     if (!row) { showStatus('Ukjent vare. Håndskriften er beholdt.'); return; }
     if (editing) cart.splice(cart.indexOf(editing),1,row);
