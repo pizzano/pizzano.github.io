@@ -36,10 +36,10 @@ ul { list-style: none; padding: 0; margin: 0 }
 <h1>Manuell bestilling</h1>
 <section>
 <h2 id="write-title">Skriv med pennen</h2>
-<p class="help">Skriv én forkortelse om gangen, for eksempel k. rull.</p>
+<p class="help">Skriv én innlært forkortelse, for eksempel k. rull, og trykk OK for å legge til varen.</p>
 <canvas id="pad" aria-labelledby="write-title"></canvas>
 <div class="row">
-<button id="recognize" class="primary" type="button">Gjenkjenn</button>
+<button id="recognize" class="primary" type="button">OK</button>
 <button id="undo" type="button">Angre strek</button>
 <button id="clear" type="button">Tøm feltet</button>
 </div>
@@ -244,8 +244,6 @@ element('teach').onclick = () => {
 
 element('recognize').onclick = () => {
   const ink = inkSignature(strokes, pad.clientWidth, pad.clientHeight);
-  product.value = '';
-  refreshControls();
   if (!ink) {
     status.textContent = 'Skriv en forkortelse i feltet først.';
     return;
@@ -264,8 +262,10 @@ element('recognize').onclick = () => {
     return;
   }
   product.value = best.key;
-  refreshControls();
-  status.textContent = 'Forslag: ' + products[best.key] + '. Kontroller før du legger til.';
+  const name = products[best.key];
+  const wasEditing = editing !== null;
+  saveLine();
+  status.textContent = wasEditing ? 'Endring lagret: ' + name + '.' : 'Lagt til: ' + name + '.';
 };
 
 function refreshControls() {
@@ -325,13 +325,14 @@ product.onchange = refreshControls;
 element('minus').onclick = () => { quantity--; refreshControls(); };
 element('plus').onclick = () => { quantity++; refreshControls(); };
 element('cancel').onclick = finishEdit;
-element('add').onclick = () => {
+function saveLine() {
   if (!product.value) return;
   const row = { key: product.value, quantity, hot: hot.checked, noOnion: noOnion.checked };
   if (editing) Object.assign(editing, row);
   else rows.push(row);
   finishEdit();
-};
+}
+element('add').onclick = saveLine;
 element('print').onclick = () => window.print();
 renderReceipt();
 </script>
