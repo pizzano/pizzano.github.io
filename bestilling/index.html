@@ -131,7 +131,10 @@ ink.addEventListener('pointerdown',event => {
   event.preventDefault();
   pointer = event.pointerId;
   ink.setPointerCapture(pointer);
-  clearTranscript();
+  if (editing) {
+    transcript = [];
+    renderCorrections('',0);
+  } else clearTranscript();
   strokes.push([point(event)]);
   redraw();
 });
@@ -547,8 +550,20 @@ function spellingDistance(a,b) {
 function similarOrders(source) {
   const text = source.trim();
   if (!text || text.length>120) return [];
+  const clean = normalize(text).replace(/\?+$/u,'').trim();
+  // A handwritten 1 can be transcribed as I or l.
+  const numeral = clean.match(/^(m\.?|st\.?|stor|medium)\s*[il](?=$|[\s,;+−-])/u);
+  const pepperoni = clean.match(/^(m\.?|st\.?|stor|medium)\s*(?:pep\.?|pepperoni)(?=$|[\s,;+−-]|[x×]\s*\d)/u);
+  if (numeral || pepperoni) {
+    const shorthand = numeral || pepperoni;
+    const size = shorthand[1].startsWith('m') ? 'Medium' : 'Stor';
+    const rest = clean.slice(shorthand[0].length).trim();
+    const replacement = size+' 1'+(rest ? ' '+rest : '')+(pepperoni ? ', bare pepperoni' : '');
+    const row = parseLine(replacement);
+    if (row) return [{row,replacement}];
+  }
   const prefix = text.match(/^(?:(?:\d{1,2}\s*[x×]\s*)?(?:stor|medium)\s+|\d{1,2}\s*[x×]\s*)/iu)?.[0] || '';
-  const remainder = text.slice(prefix.length);
+  const remainder = text.slice(prefix.length).replace(/\?+$/u,'').trimEnd();
   const candidates = new Map();
   const exact = productMatches(normalize(remainder));
   if (exact.length>1) {
@@ -586,7 +601,7 @@ function renderCorrections(source,index) {
   area.replaceChildren(...options.map(({row,replacement}) => {
     const button = document.createElement('button');
     button.type = 'button';
-    button.textContent = row.name;
+    button.textContent = row.quantity+'× '+row.name+(row.notes.length ? ' · '+row.notes.join(' · ') : '');
     button.onclick = () => {
       if (transcript[index]!==source) return;
       transcript[index]=replacement;
@@ -771,7 +786,7 @@ function submitTranscript() {
   const unknown = rows.indexOf(null);
   if (unknown>=0) {
     renderCorrections(transcript[unknown],unknown);
-    showStatus('Kontroller linje '+(unknown+1)+': '+transcript[unknown]);
+    showStatus((byId('corrections').hidden ? 'Skriv linjen på nytt: ' : 'Mente du dette? Linje '+(unknown+1)+': ')+transcript[unknown]);
     return;
   }
   saveRows(rows);
@@ -815,7 +830,8 @@ function makeItem(row, actionable) {
       strokes = row.ink ? row.ink.map(path => [...path]) : [];
       pageTop = 0;
       redraw();
-      showStatus('Skriv varelinjen på nytt med pennen.');
+      render();
+      showStatus('Endrer '+row.quantity+'× '+row.name+(row.notes.length ? ' · '+row.notes.join(' · ') : '')+'. Skriv hele linjen og trykk ✓.');
     }],
     ['×','Fjern','remove',() => {
       cart.splice(cart.indexOf(row),1);
@@ -845,6 +861,7 @@ function render() {
   const raw = cart.filter(row=>!row.quantity).length;
   byId('total').textContent = cart.reduce((sum,row)=>sum+row.quantity,0) + ' stk' + (raw ? ' · ' + raw + ' notat' : '');
   byId('print').disabled = !cart.length;
+  byId('ok').setAttribute('aria-label',editing ? 'Lagre endring' : 'Legg til bestilling');
 }
 byId('all').onclick = () => byId('basket').showModal();
 byId('print').onclick = () => window.print();
