@@ -5,65 +5,61 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Manuell bestilling</title>
 <style>
+:root{color-scheme:light;--page:#eef2ef;--paper:#fff;--ink:#162922;--muted:#52665c;--line:#d9e2dc;--green:#18563f;--dark:#102a23}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{margin:0;background:#edf3f0;color:#142b23;font:16px system-ui,sans-serif}
-main{max-width:42rem;margin:auto;height:100dvh;display:grid;grid-template-rows:auto auto minmax(0,1.7fr) auto minmax(0,1fr) auto;gap:6px;padding:8px}
-h1,h2,p{margin:0}h1{font-size:20px}h2{font-size:16px}
-#ink{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair;background:repeating-linear-gradient(to bottom,#142b25 0 33px,#39544a 33px 34px);background-position:0 var(--ink-offset,0px)}
-.tools{display:flex;gap:4px;position:absolute;bottom:8px;left:8px}
-.tools button{font-size:13px;min-height:38px}
-.ink-preview{display:block;max-width:100%;max-height:135px;object-fit:contain;object-position:left}
-#menu-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}
-#menu-list button{text-align:left;font-size:14px}
-.notebook{position:relative;min-height:0;border:1px solid #2e443e;border-radius:12px;overflow:hidden;background:#142b25}
-textarea{display:block;width:100%;height:100%;min-height:0;resize:none;border:0;border-radius:12px;padding:12px 58px 52px 12px;background:repeating-linear-gradient(to bottom,#142b25 0 33px,#39544a 33px 34px);background-attachment:local;background-origin:content-box;color:#f2faf4;caret-color:#a8eac0;font:20px/34px system-ui,sans-serif;scrollbar-width:thin}
-textarea::placeholder{color:#b4c7bc}
-#next-line{position:absolute;right:8px;bottom:8px;width:44px;padding:0;background:#d8f3e1;color:#143c2b}
-footer .print-icon{margin-left:auto;min-width:48px;display:grid;place-items:center;background:#145039;color:#fff}
-.icon-svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-nav,footer,.heading,li{display:flex;align-items:center;gap:6px}
-.heading{justify-content:space-between}
-button{min-height:44px;padding:6px 12px;border:1px solid #879d91;border-radius:8px;background:white;color:inherit;font:inherit;font-weight:650;cursor:pointer}
-button:disabled{opacity:.55}
-.primary{background:#145039;border-color:#145039;color:white;flex:1}
-#cart{min-height:0;overflow:hidden;padding:6px 8px;border:1px solid #c8d7ce;border-radius:9px;background:white}
-#status,#suggestion{font-size:13px;margin:3px 0;overflow-wrap:anywhere}
-#suggestion{color:#245841;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#status{color:#744117}
-ul{list-style:none;padding:0;margin:0}
-li{padding:4px;overflow-wrap:anywhere}
+body{margin:0;background:var(--page);color:var(--ink);font:16px system-ui,sans-serif}
+main{width:min(100%,39rem);height:100dvh;margin:auto;padding:10px 12px max(8px,env(safe-area-inset-bottom));display:grid;grid-template-rows:auto minmax(0,1fr) auto minmax(106px,.42fr) auto;gap:8px}
+h1,h2,p{margin:0}
+h1{font-size:clamp(19px,5vw,24px);letter-spacing:-.035em}
+h2{font-size:15px}
+header,nav,footer,.heading,li,.sheet-top{display:flex;align-items:center;gap:8px}
+header,.heading,footer,.sheet-top{justify-content:space-between}
+button{min-height:44px;padding:6px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:inherit;font:inherit;font-weight:650;cursor:pointer;touch-action:manipulation}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible{outline:2px solid #bf8b3b;outline-offset:2px}
+.primary{flex:1;color:white;background:var(--green);border-color:var(--green);font-size:18px}
+.notebook{position:relative;min-height:0;overflow:hidden;background:var(--dark);border-radius:14px;border:1px solid #284a3c}
+#ink,textarea{display:block;width:100%;height:100%;background:repeating-linear-gradient(to bottom,var(--dark) 0 33px,#2b493e 33px 34px)}
+#ink{touch-action:none;cursor:crosshair;background-position:0 var(--ink-offset,0px)}
+textarea{resize:none;border:0;padding:12px 12px 64px;color:#f4faf6;caret-color:#9de2bc;font:20px/34px system-ui,sans-serif;background-origin:content-box;background-attachment:local}
+textarea::placeholder{color:#b2c9bd}
+.tools{position:absolute;bottom:8px;left:8px;display:flex;gap:6px}
+.tools button,#next-line{display:grid;place-items:center;width:44px;padding:0;color:#f4faf6;background:#214638;border-color:#3c6151}
+#next-line{position:absolute;bottom:8px;right:8px;color:var(--dark);background:#d9eddf}
+.icon-svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+#cart{display:flex;flex-direction:column;gap:3px;min-height:0;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:auto;scrollbar-width:thin}
+#suggestion,#status,#empty-cart{font-size:13px;overflow-wrap:anywhere}
+#suggestion,#empty-cart{color:var(--muted)}
+#status{color:#8a411e}
+#all{border:0;min-height:32px;padding:2px 4px;font-size:13px;color:var(--green)}
+ul{list-style:none;margin:0;padding:0}
+li{padding:6px 7px;overflow-wrap:anywhere}
 li>div{flex:1;min-width:0}
-li small{display:block}
-#latest li{background:#d7f4e1;border-radius:7px}
-.icon{font-size:20px;min-width:44px;padding:2px}
-.remove{color:#8c2525}
-#all{font-size:13px;min-height:32px;padding:3px 6px}
-dialog{width:min(94vw,38rem);max-height:82dvh;border:1px solid #879d91;border-radius:10px}
-footer{padding-bottom:env(safe-area-inset-bottom)}
+li small{display:block;margin-top:2px;color:var(--muted)}
+#latest li{background:#e3f1e8;border-radius:9px}
+.icon{min-width:44px;padding:0;font-size:20px}
+.remove{color:#922f2f}
+footer{color:var(--muted);font-size:14px}
+footer .print-icon{display:grid;place-items:center;min-width:48px;background:var(--green);border-color:var(--green);color:white}
+.ink-preview{display:block;max-width:100%;max-height:90px;object-fit:contain;object-position:left}
+dialog{width:min(100% - 16px,38rem);max-height:82dvh;margin:auto auto 8px;border:1px solid var(--line);border-radius:16px;padding:12px;color:var(--ink);background:var(--paper)}
+dialog::backdrop{background:#102a2380}
+.sheet-top{position:sticky;top:-12px;background:white;z-index:1;padding:4px 0}
+.quick,#menu-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}
+.quick button{text-align:left;background:#e3f1e8;border-color:#c9e1d1}
+#menu-list button{text-align:left;font-size:14px}
 #sheet{display:none}
-@media print{main,dialog{display:none!important}body{color:black;background:white}#sheet{display:block}#sheet li{break-inside:avoid}#sheet .ink-preview{max-height:none}}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 1px}
-.topbar h1{font-size:22px;letter-spacing:-.025em}
-.quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
-.quick button{min-height:38px;padding:4px;font-size:12px;white-space:nowrap;background:#fff;border-color:#c5d7cd;border-radius:9px}
-.quick button:hover,#menu-list button:hover{background:#d7f4e1}
-.notebook{box-shadow:0 3px 8px #142b251c}
-#cart{border-radius:12px;overflow:auto;scrollbar-width:thin}
-#latest li{padding:6px}
-footer{border-top:1px solid #c8d7ce;padding-top:4px}
-dialog::backdrop{background:#142b257a}
-@media (min-width:420px){.quick button{font-size:14px}}
+@media print{main,dialog{display:none!important}body{color:#000;background:#fff}#sheet{display:block}#sheet li{break-inside:avoid}#sheet .ink-preview{max-height:none}}
 </style>
 </head>
 <body>
 <main>
 <header class="topbar"><h1>Manuell bestilling</h1><button id="menu" type="button">Meny</button></header>
-<div id="quick" class="quick" aria-label="Hurtigvalg"></div>
 <div class="notebook">
 <canvas id="ink" aria-label="Skriv med penn, finger eller mus"></canvas>
 <textarea id="order" aria-label="Skriv bestillingen" hidden inputmode="none" autocomplete="off" spellcheck="false" placeholder="Skriv med S Pen"></textarea>
-<div class="tools"><button id="mode" type="button">S Pen-tekst</button></div>
+<div class="tools"><button id="undo" type="button" aria-label="Angre siste strek" title="Angre siste strek"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5m-5-5h11a4 4 0 0 1 4 4v2"/></svg></button></div>
 <button id="next-line" type="button" aria-label="Bla opp og fortsett å skrive" title="Bla opp og fortsett å skrive"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4m-6 6 6-6 6 6"/></svg></button>
 </div>
 <nav><button id="clear" type="button">Tøm felt</button><button id="ok" class="primary" type="button">OK</button></nav>
@@ -71,12 +67,18 @@ dialog::backdrop{background:#142b257a}
 <div class="heading"><h2>Bestilling</h2><button id="all" type="button" hidden>Vis alle</button></div>
 <p id="suggestion" aria-live="polite" hidden></p>
 <p id="status" role="status" hidden></p>
+<p id="empty-cart">Ingen varer lagt til.</p>
 <ul id="latest"></ul>
 </section>
 <footer><span id="total">0 stk</span><button id="print" class="print-icon" type="button" aria-label="Skriv ut bestillingen" title="Skriv ut bestillingen" disabled><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6zM17 12h1"/></svg></button></footer>
 </main>
-<dialog id="menu-dialog"><h2>Velg fra menyen</h2><div id="menu-list"></div><form method="dialog"><button>Lukk</button></form></dialog>
-<dialog id="basket"><h2>Alle varer</h2><ul id="basket-lines"></ul><form method="dialog"><button>Lukk</button></form></dialog>
+<dialog id="menu-dialog">
+<div class="sheet-top"><h2>Meny</h2><form method="dialog"><button aria-label="Lukk menyen">×</button></form></div>
+<div id="quick" class="quick" aria-label="Hurtigvalg"></div>
+<button id="mode" type="button" style="margin-top:8px">S Pen-tekst</button>
+<div id="menu-list"></div>
+</dialog>
+<dialog id="basket"><div class="sheet-top"><h2>Alle varer</h2><form method="dialog"><button aria-label="Lukk bestillingen">×</button></form></div><ul id="basket-lines"></ul></dialog>
 <section id="sheet"><h2>Kjøkkenbestilling</h2><ul id="print-lines"></ul></section>
 <script>
 'use strict';
@@ -148,12 +150,22 @@ function openMode(enabled) {
   ink.hidden = enabled;
   order.hidden = !enabled;
   byId('mode').textContent = enabled ? 'Frihånd' : 'S Pen-tekst';
+  byId('undo').hidden = enabled;
   if (enabled) order.focus({preventScroll:true});
   else redraw();
   displaySuggestion();
   renderQuick();
 }
-byId('mode').onclick = () => openMode(!textMode);
+byId('mode').onclick = () => {
+  byId('menu-dialog').close();
+  openMode(!textMode);
+};
+byId('undo').onclick = () => {
+  if (pointer !== null || !strokes.length) return;
+  strokes.pop();
+  if (!strokes.length) pageTop = 0;
+  redraw();
+};
 byId('menu').onclick = () => byId('menu-dialog').showModal();
 for (const product of catalog.products) {
   const button = document.createElement('button');
@@ -181,7 +193,11 @@ function renderQuick() {
     button.type = 'button';
     button.textContent = label;
     button.onclick = () => {
-      if (!textMode) { selectProduct(value); return; }
+      if (!textMode) {
+        byId('menu-dialog').close();
+        selectProduct(value);
+        return;
+      }
       const lines = order.value.trimEnd().split('\n');
       const last = lines.at(-1);
       if (!last || !parseLine(last)) { showStatus('Velg eller skriv en vare først.'); return; }
@@ -189,6 +205,7 @@ function renderQuick() {
       if (!parseLine(updated)) { showStatus('Kontroller merknadene på varelinjen.'); return; }
       lines[lines.length-1] = updated;
       order.value = lines.join('\n');
+      byId('menu-dialog').close();
       displaySuggestion();
     };
     return button;
@@ -642,7 +659,7 @@ byId('ok').onclick = () => {
   if (!textMode) {
     if (pointer !== null || !strokes.length) { showStatus('Skriv bestillingen først.'); return; }
     const row = recognizeSavedProduct(strokes);
-    if (!row) { showStatus('Fant ingen sikker vare. Håndskriften er beholdt.'); return; }
+    if (!row) { showStatus('Ukjent vare. Velg fra Meny eller skriv på nytt.'); return; }
     if (editing) cart.splice(cart.indexOf(editing),1,row);
     else cart.push(row);
     latest = row;
@@ -722,6 +739,7 @@ function render() {
   byId('basket-lines').replaceChildren(...[...cart].reverse().map(row=>makeItem(row,true)));
   byId('print-lines').replaceChildren(...cart.map(row=>makeItem(row,false)));
   byId('all').hidden = !cart.length;
+  byId('empty-cart').hidden = Boolean(cart.length);
   byId('all').textContent = 'Vis alle (' + cart.length + ')';
   const raw = cart.filter(row=>!row.quantity).length;
   byId('total').textContent = cart.reduce((sum,row)=>sum+row.quantity,0) + ' stk' + (raw ? ' · ' + raw + ' notat' : '');
