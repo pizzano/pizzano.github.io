@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manuell bestilling</title>
+<style>
+* { box-sizing: border-box }
+body { margin: 0; background: #edf3f0; color: #142b23; font: 16px system-ui,sans-serif }
+main { max-width: 38rem; margin: auto; padding: clamp(16px,5vw,32px); display: grid; gap: 14px }
+h1, h2, p { margin: 0 }
+h1 { font-size: clamp(26px,6vw,38px) }
+h2 { font-size: 18px }
+section { background: white; border: 1px solid #cfddd5; border-radius: 15px; padding: 14px; display: grid; gap: 10px }
+canvas { display: block; width: 100%; height: 190px; border: 1px solid #778e82; border-radius: 8px; touch-action: none; cursor: crosshair }
+.row, .receipt-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px }
+button, select { min-height: 44px; padding: 8px 11px; border: 1px solid #9aada2; border-radius: 8px; background: white; color: inherit; font: inherit }
+button { cursor: pointer; font-weight: 650 }
+button:disabled { opacity: .55; cursor: default }
+.primary { color: white; background: #145039; border-color: #145039 }
+.help { color: #425b50; font-size: 14px }
+ul { list-style: none; padding: 0; margin: 0 }
+.receipt-row { padding: 7px 0; border-bottom: 1px solid #d9e3dd }
+.receipt-row span { flex: 1; min-width: 10ch }
+@media print {
+ body { background: white; color: black }
+ main { display: block; padding: 0 }
+ main > :not(#receipt), #receipt button, #empty { display: none }
+ #receipt { border: 0; padding: 0 }
+ .receipt-row { break-inside: avoid }
+}
+</style>
+</head>
+<body>
+<main>
+<h1>Manuell bestilling</h1>
+<section>
+<h2 id="write-title">Skriv med pennen</h2>
+<p class="help">Skriv én forkortelse om gangen, for eksempel k. rull.</p>
+<canvas id="pad" aria-labelledby="write-title"></canvas>
+<div class="row">
+<button id="recognize" class="primary" type="button">Gjenkjenn</button>
+<button id="undo" type="button">Angre strek</button>
+<button id="clear" type="button">Tøm feltet</button>
+</div>
+<p id="status" class="help" role="status"></p>
+</section>
+<section>
+<h2>Varelinje</h2>
+<div class="row">
+<label for="product">Vare</label>
+<select id="product">
+<option value="">Velg vare</option>
+<option value="roll">Kebab Rull (k. rull)</option>
+<option value="plate">Kebab Tallerken (k. tall)</option>
+<option value="pizza">Stor Pepperoni (st. pep)</option>
+</select>
+<button id="teach" type="button">Lær denne håndskriften</button>
+</div>
+<p class="help">Første gang velger du varen og lagrer gjerne flere eksempler på forkortelsen.</p>
+<div class="row">
+<button id="minus" type="button" aria-label="Reduser antall">−</button>
+<output id="quantity" aria-label="Antall">1</output>
+<button id="plus" type="button" aria-label="Øk antall">+</button>
+<label><input id="hot" type="checkbox"> Sterk saus</label>
+<label><input id="no-onion" type="checkbox"> Uten løk</label>
+</div>
+<div class="row">
+<button id="add" class="primary" type="button" disabled>Legg til</button>
+<button id="cancel" type="button" hidden>Avbryt endring</button>
+</div>
+</section>
+<section id="receipt">
+<h2>Kjøkkenbestilling</h2>
+<p id="empty" class="help">Bestillingen vises her.</p>
+<ul id="lines"></ul>
+</section>
+<button id="print" class="primary" type="button" disabled>Skriv ut</button>
+</main>
+<script>
+'use strict';
+
+const element = id => document.getElementById(id);
+const pad = element('pad');
+const context = pad.getContext('2d');
+const product = element('product');
+const hot = element('hot');
+const noOnion = element('no-onion');
+const status = element('status');
+const products = { roll: 'Kebab Rull', plate: 'Kebab Tallerken', pizza: 'Stor Pepperoni' };
+const storageKey = 'bestilling-handwriting-v1';
+const strokes = [];
+const rows = [];
+let samples = {};
+let activePointer = null;
+let quantity = 1;
+let editing = null;
+
+try {
+  const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  for (const key of Object.keys(products)) {
+    if (Array.isArray(saved?.[key])) samples[key] = saved[key];
+  }
+} catch {
+  status.textContent = 'Lagrede eksempler kunne ikke leses.';
+}
+
+function draw() {
+  const width = pad.clientWidth;
+  const height = pad.clientHeight;
+  const scale = window.devicePixelRatio || 1;
+  if (pad.width !== Math.round(width * scale) || pad.height !== Math.round(height * scale)) {
+    pad.width = Math.round(width * scale);
+    pad.height = Math.round(height * scale);
+  }
+  context.setTransform(scale, 0, 0, scale, 0, 0);
+  context.clearRect(0, 0, width, height);
+  context.strokeStyle = context.fillStyle = '#2058bc';
+  context.lineWidth = 2.5;
+  context.lineCap = context.lineJoin = 'round';
+  for (const stroke of strokes) {
+    context.beginPath();
+    if (stroke.length === 1) {
+      context.arc(stroke[0][0] * width, stroke[0][1] * height, 1.25, 0, 2 * Math.PI);
+      context.fill();
+      continue;
+    }
+    context.moveTo(stroke[0][0] * width, stroke[0][1] * height);
+    for (const [x, y] of stroke.slice(1)) context.lineTo(x * width, y * height);
+    context.stroke();
+  }
+}
+
+function point(event) {
+  const rect = pad.getBoundingClientRect();
+  return [
+    Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)),
+    Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height))
+  ];
+}
+
+pad.addEventListener('pointerdown', event => {
+  if (!event.isPrimary || event.button !== 0 || activePointer !== null) return;
+  event.preventDefault();
+  activePointer = event.pointerId;
+  pad.setPointerCapture(activePointer);
+  strokes.push([point(event)]);
+  status.textContent = '';
+  draw();
+});
+pad.addEventListener('pointermove', event => {
+  if (event.pointerId !== activePointer) return;
+  const events = event.getCoalescedEvents?.();
+  for (const sample of events?.length ? events : [event]) strokes.at(-1).push(point(sample));
+  draw();
+});
+for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+  pad.addEventListener(type, event => {
+    if (event.pointerId === activePointer) activePointer = null;
+  });
+}
+new ResizeObserver(draw).observe(pad);
+
+function clearInk() {
+  strokes.length = 0;
+  activePointer = null;
+  status.textContent = '';
+  draw();
+}
+
+element('clear').onclick = clearInk;
+element('undo').onclick = () => {
+  if (activePointer !== null) return;
+  strokes.pop();
+  status.textContent = '';
+  draw();
+};
+
+function inkSignature(paths, width, height) {
+  const points = paths.flat();
+  if (points.length < 2) return null;
+  const xs = points.map(([x]) => x * width);
+  const ys = points.map(([, y]) => y * height);
+  const left = Math.min(...xs);
+  const top = Math.min(...ys);
+  const spanX = Math.max(...xs) - left;
+  const spanY = Math.max(...ys) - top;
+  const scale = Math.max(spanX, spanY);
+  if (scale < 12) return null;
+  const cells = new Set();
+  for (const path of paths) {
+    let previous;
+    for (const [x, y] of path) {
+      const current = [(x * width - left) * 23 / scale, (y * height - top) * 23 / scale];
+      const start = previous || current;
+      const steps = Math.max(1, Math.ceil(Math.hypot(current[0] - start[0], current[1] - start[1])));
+      for (let step = 0; step <= steps; step++) {
+        const px = Math.round(start[0] + (current[0] - start[0]) * step / steps);
+        const py = Math.round(start[1] + (current[1] - start[1]) * step / steps);
+        cells.add(px + 24 * py);
+      }
+      previous = current;
+    }
+  }
+  return [...cells];
+}
+
+function inkDistance(first, second) {
+  function averageNearest(source, target) {
+    let sum = 0;
+    for (const cell of source) {
+      const x = cell % 24;
+      const y = Math.floor(cell / 24);
+      let nearest = Infinity;
+      for (const other of target) {
+        const dx = x - other % 24;
+        const dy = y - Math.floor(other / 24);
+        nearest = Math.min(nearest, dx * dx + dy * dy);
+        if (nearest === 0) break;
+      }
+      sum += Math.sqrt(nearest);
+    }
+    return sum / source.length;
+  }
+  return (averageNearest(first, second) + averageNearest(second, first)) / 2;
+}
+
+element('teach').onclick = () => {
+  const ink = inkSignature(strokes, pad.clientWidth, pad.clientHeight);
+  const key = product.value;
+  if (!ink || !key) {
+    status.textContent = 'Skriv en forkortelse og velg varen først.';
+    return;
+  }
+  samples[key] = [...(samples[key] || []), ink].slice(-8);
+  clearInk();
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(samples));
+    status.textContent = 'Eksempel lagret for ' + products[key] + '.';
+  } catch {
+    status.textContent = 'Eksempelet kan brukes til du lukker siden.';
+  }
+};
+
+element('recognize').onclick = () => {
+  const ink = inkSignature(strokes, pad.clientWidth, pad.clientHeight);
+  product.value = '';
+  refreshControls();
+  if (!ink) {
+    status.textContent = 'Skriv en forkortelse i feltet først.';
+    return;
+  }
+  const ranked = Object.entries(samples).map(([key, examples]) => ({
+    key,
+    score: Math.min(...examples.filter(example => Array.isArray(example) && example.length).map(example => inkDistance(ink, example)))
+  })).filter(entry => Number.isFinite(entry.score)).sort((a, b) => a.score - b.score);
+  const [best, second] = ranked;
+  if (!best) {
+    status.textContent = 'Velg varen og trykk på «Lær denne håndskriften».';
+    return;
+  }
+  if (best.score > 2.2 || (second && second.score - best.score < 0.45)) {
+    status.textContent = 'Usikker håndskrift. Velg varen fra listen.';
+    return;
+  }
+  product.value = best.key;
+  refreshControls();
+  status.textContent = 'Forslag: ' + products[best.key] + '. Kontroller før du legger til.';
+};
+
+function refreshControls() {
+  element('quantity').value = String(quantity);
+  element('minus').disabled = quantity <= 1;
+  element('plus').disabled = quantity >= 99;
+  element('add').disabled = !product.value;
+  element('add').textContent = editing ? 'Lagre endring' : 'Legg til';
+  element('cancel').hidden = !editing;
+  element('print').disabled = rows.length === 0 || editing !== null;
+}
+
+function finishEdit() {
+  editing = null;
+  product.value = '';
+  hot.checked = noOnion.checked = false;
+  quantity = 1;
+  clearInk();
+  renderReceipt();
+}
+
+function renderReceipt() {
+  element('empty').hidden = rows.length > 0;
+  element('lines').replaceChildren(...rows.map(row => {
+    const item = document.createElement('li');
+    item.className = 'receipt-row';
+    const text = document.createElement('span');
+    const options = [];
+    if (row.hot) options.push('sterk saus');
+    if (row.noOnion) options.push('uten løk');
+    text.textContent = row.quantity + '× ' + products[row.key] + (options.length ? ' – ' + options.join(', ') : '');
+    const editButton = document.createElement('button');
+    editButton.textContent = 'Endre';
+    editButton.onclick = () => {
+      editing = row;
+      product.value = row.key;
+      quantity = row.quantity;
+      hot.checked = row.hot;
+      noOnion.checked = row.noOnion;
+      refreshControls();
+      product.scrollIntoView({ block: 'nearest' });
+    };
+    const remove = document.createElement('button');
+    remove.textContent = 'Fjern';
+    remove.onclick = () => {
+      rows.splice(rows.indexOf(row), 1);
+      if (editing === row) finishEdit();
+      else renderReceipt();
+    };
+    item.append(text, editButton, remove);
+    return item;
+  }));
+  refreshControls();
+}
+
+product.onchange = refreshControls;
+element('minus').onclick = () => { quantity--; refreshControls(); };
+element('plus').onclick = () => { quantity++; refreshControls(); };
+element('cancel').onclick = finishEdit;
+element('add').onclick = () => {
+  if (!product.value) return;
+  const row = { key: product.value, quantity, hot: hot.checked, noOnion: noOnion.checked };
+  if (editing) Object.assign(editing, row);
+  else rows.push(row);
+  finishEdit();
+};
+element('print').onclick = () => window.print();
+renderReceipt();
+</script>
+</body>
+</html>
