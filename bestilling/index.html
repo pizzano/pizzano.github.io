@@ -3,944 +3,190 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#102a23">
 <title>Manuell bestilling</title>
 <style>
-:root{color-scheme:light;--page:#eef2ef;--paper:#fff;--ink:#162922;--muted:#52665c;--line:#d9e2dc;--green:#18563f;--dark:#102a23}
-*{box-sizing:border-box}
-[hidden]{display:none!important}
-body{margin:0;background:var(--page);color:var(--ink);font:16px system-ui,sans-serif}
-main{width:100%;height:100dvh;margin:auto;padding:0 0 env(safe-area-inset-bottom);display:grid;grid-template-rows:minmax(0,1fr) auto auto;gap:0}
-h1,h2,p{margin:0}
-h1{font-size:clamp(19px,5vw,24px);letter-spacing:-.035em}
-h2{font-size:15px}
-header,nav,footer,.heading,li,.sheet-top{display:flex;align-items:center;gap:8px}
-header,.heading,footer,.sheet-top{justify-content:space-between}
-button{min-height:44px;padding:6px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:inherit;font:inherit;font-weight:650;cursor:pointer;touch-action:manipulation}
-button:disabled{opacity:.5;cursor:default}
-button:focus-visible{outline:2px solid #bf8b3b;outline-offset:2px}
-.primary{flex:1;color:white;background:var(--green);border-color:var(--green);font-size:18px}
-.notebook{position:relative;min-height:0;overflow:hidden;background:var(--dark)}
-#ink{display:block;width:100%;height:100%;background:repeating-linear-gradient(to bottom,var(--dark) 0 33px,#2b493e 33px 34px)}
-#ink{touch-action:none;cursor:crosshair;background-position:0 var(--ink-offset,0px)}
-.tools{position:absolute;bottom:8px;left:8px;display:flex;gap:6px}
-.tools button,#next-line{display:grid;place-items:center;width:44px;padding:0;color:#f4faf6;background:#214638;border-color:#3c6151}
-#next-line{position:absolute;bottom:8px;right:8px;color:var(--dark);background:#d9eddf}
-.icon-svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
-#cart{display:flex;flex-direction:column;gap:3px;min-height:0;max-height:26dvh;padding:4px 6px;background:var(--paper);overflow:auto;scrollbar-width:thin}
-#corrections{display:flex;gap:4px;flex-wrap:wrap}
-#corrections button{font-size:13px;min-height:38px;padding:4px 8px}
-#suggestion,#status{font-size:13px;overflow-wrap:anywhere}
-#suggestion{color:var(--muted)}
-#status{color:#8a411e}
-#all{border:0;min-height:32px;padding:2px 4px;font-size:13px;color:var(--green)}
-ul{list-style:none;margin:0;padding:0}
-li{padding:6px 7px;overflow-wrap:anywhere}
-li>div{flex:1;min-width:0}
-li small{display:block;margin-top:2px;color:var(--muted)}
-#latest li{background:#e3f1e8;border-radius:9px}
-.icon{min-width:44px;padding:0;font-size:20px}
-.remove{color:#922f2f}
-footer{color:var(--muted);font-size:14px;gap:5px;padding:3px 6px;background:var(--page)}
-#ok{display:grid;place-items:center}
-#ok[aria-busy=true] svg{opacity:.45}
-#total{display:none}
-footer .tool-icon{display:grid;place-items:center;width:44px;padding:0}
-#total{white-space:nowrap;font-size:12px}
-#all{align-self:flex-end}
-@media(max-width:340px){#total{display:none}}
-footer .print-icon{display:grid;place-items:center;min-width:48px;background:var(--green);border-color:var(--green);color:white}
-.ink-preview{display:block;max-width:100%;max-height:90px;object-fit:contain;object-position:left}
-dialog{width:min(100% - 16px,38rem);max-height:82dvh;margin:auto auto 8px;border:1px solid var(--line);border-radius:16px;padding:12px;color:var(--ink);background:var(--paper)}
-dialog::backdrop{background:#102a2380}
-.sheet-top{position:sticky;top:-12px;background:white;z-index:1;padding:4px 0}
-.quick,#menu-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}
-.quick button{text-align:left;background:#e3f1e8;border-color:#c9e1d1}
-#menu-list button{text-align:left;font-size:14px}
-#sheet{display:none}
-@media print{main,dialog{display:none!important}body{color:#000;background:#fff}#sheet{display:block}#sheet li{break-inside:avoid}#sheet .ink-preview{max-height:none}}
+:root{color-scheme:light;--dark:#102a23;--green:#18563f;--line:#dce5df;--paper:#fff;--muted:#50665b}
+*{box-sizing:border-box} [hidden]{display:none!important}
+body{margin:0;font:15px system-ui,sans-serif;background:var(--dark);color:#162922}
+main{height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;padding-bottom:env(safe-area-inset-bottom)}
+header,footer,.tools,.dialog-head{display:flex;align-items:center;gap:6px}
+header{background:#fff;padding:7px 10px;justify-content:space-between}
+header strong{font-size:15px} header small{display:block;color:var(--muted);font-size:12px}
+button{font:inherit;font-weight:650;min-height:44px;border:1px solid var(--line);border-radius:9px;padding:6px 11px;background:white;color:inherit;touch-action:manipulation;cursor:pointer}
+button:disabled{opacity:.42;cursor:default} button:focus-visible{outline:2px solid #c39d50;outline-offset:2px}
+.icon{display:grid;place-items:center;min-width:44px;padding:0}
+svg{width:23px;height:23px;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;fill:none;pointer-events:none}
+.notebook{position:relative;min-height:0;overflow:hidden}
+#ink{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.tools{background:#183b30;color:white;padding:5px 7px;justify-content:space-between}
+.tools .icon{color:white;background:#244b3c;border-color:#406354}
+#page{font-size:12px;color:#e6f0e9;text-align:center;flex:1}
+footer{padding:5px 7px;background:#f2f5f3}
+#print{background:var(--green);border-color:var(--green);color:white;flex:1;display:flex;justify-content:center;align-items:center;gap:8px}
+#new{color:#18563f}
+#status{margin:0;background:#f7f9f7;color:#344e41;padding:6px 10px;font-size:13px;overflow-wrap:anywhere}
+#status[data-kind=error]{color:#9b2929;background:#fff1ef}
+#status[data-kind=ok]{color:#18563f;background:#e3f2e8}
+dialog{width:min(96%,460px);max-height:90dvh;border:1px solid #cdd8d1;border-radius:12px;padding:12px;overflow:auto;color:#162922}
+dialog::backdrop{background:#0008}.dialog-head{justify-content:space-between;position:sticky;top:-12px;background:white;padding:5px 0;z-index:1}
+#preview-image{display:block;width:100%;height:auto;border:1px solid #ddd}
+@media(min-width:700px){main{max-width:850px;margin:auto}}
 </style>
 </head>
 <body>
 <main>
-<div class="notebook">
-<canvas id="ink" aria-label="Skriv med penn, finger eller mus"></canvas>
-<div class="tools"><button id="undo" type="button" aria-label="Angre siste strek" title="Angre siste strek"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5m-5-5h11a4 4 0 0 1 4 4v2"/></svg></button></div>
-<button id="next-line" type="button" aria-label="Bla opp og fortsett å skrive" title="Bla opp og fortsett å skrive"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4m-6 6 6-6 6 6"/></svg></button>
+<header><div><strong>Manuell bestilling</strong><small id="order-label"></small></div><button id="new" type="button">Ny bestilling</button></header>
+<div class="notebook"><canvas id="ink" aria-label="Skriv bestillingen for hånd"></canvas></div>
+<div class="tools">
+<button id="undo" class="icon" type="button" title="Angre siste strek" aria-label="Angre siste strek"><svg viewBox="0 0 24 24"><path d="M9 7 4 12l5 5m-5-5h11a4 4 0 0 1 4 4v2"/></svg></button>
+<button id="clear" class="icon" type="button" title="Tøm bestillingen" aria-label="Tøm bestillingen"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg></button>
+<button id="up" class="icon" type="button" title="Bla opp" aria-label="Bla opp"><svg viewBox="0 0 24 24"><path d="m6 14 6-6 6 6"/></svg></button>
+<span id="page"></span>
+<button id="down" class="icon" type="button" title="Fortsett nedover" aria-label="Fortsett nedover"><svg viewBox="0 0 24 24"><path d="m6 10 6 6 6-6"/></svg></button>
 </div>
-<section id="cart" aria-label="Bestilling" hidden>
-<button id="all" type="button" hidden>Vis alle</button>
-<p id="status" role="status" hidden></p>
-<div id="corrections" aria-label="Mulige varer" hidden></div>
-<ul id="latest"></ul>
-</section>
-<footer aria-label="Bestillingshandlinger">
-<button id="clear" class="tool-icon" type="button" aria-label="Tøm felt" title="Tøm felt"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg></button>
-<button id="ok" class="primary" type="button" aria-label="Legg til bestilling" title="Legg til bestilling"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></button>
-<span id="total" hidden></span><button id="print" class="print-icon" type="button" aria-label="Skriv ut bestillingen" title="Skriv ut bestillingen" disabled><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6zM17 12h1"/></svg></button></footer>
+<div>
+<p id="status" role="status" aria-live="polite" hidden></p>
+<footer><button id="preview" class="icon" type="button" title="Forhåndsvisning" aria-label="Forhåndsvisning"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+<button id="print" type="button"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6zM17 12h1"/></svg><span id="print-label">Skriv ut</span></button></footer>
+</div>
 </main>
-<dialog id="basket"><div class="sheet-top"><h2>Alle varer</h2><form method="dialog"><button aria-label="Lukk bestillingen">×</button></form></div><ul id="basket-lines"></ul></dialog>
-<section id="sheet"><h2>Kjøkkenbestilling</h2><ul id="print-lines"></ul></section>
+<dialog id="preview-dialog"><div class="dialog-head"><strong>Forhåndsvisning · 80 mm</strong><form method="dialog"><button type="submit">Lukk</button></form></div><img id="preview-image" alt="Forhåndsvisning av kjøkkenlappen"></dialog>
 <script>
 'use strict';
-const catalog = {"products": [{"id": "gf_item_17777927", "name": "1. Classico", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17777930", "name": "2. Capri", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17777931", "name": "3. Al Capone", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782816", "name": "4. Parma", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782817", "name": "5. Sjefens favoritt", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782818", "name": "6. Torino", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782819", "name": "7. Mexican Style", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782820", "name": "8. Kebabpizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782821", "name": "9. Kyllingpizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782822", "name": "10. Alfredo", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782823", "name": "11. Calzone (innbakt pizza)", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782824", "name": "12. Ciao Ciao", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782825", "name": "13. Pollo Marina", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782826", "name": "14. Bianca", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_19838139", "name": "15. Fantasia", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_19838148", "name": "16. Diavola", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_18111705", "name": "17. Lag din egen pizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17785864", "name": "Hvitløksdressing", "sizes": ["Standard"]}, {"id": "gf_item_17785865", "name": "Béarnaisesaus", "sizes": ["Standard"]}, {"id": "gf_item_17788540", "name": "Kebab i pita", "sizes": ["Standard"]}, {"id": "gf_item_17788543", "name": "Kyllingkebab i pita", "sizes": ["Standard"]}, {"id": "gf_item_17788668", "name": "Kebabrull", "sizes": ["Standard"]}, {"id": "gf_item_17788669", "name": "Kyllingkebabrull", "sizes": ["Standard"]}, {"id": "gf_item_17788670", "name": "Kebabtallerken", "sizes": ["Standard"]}, {"id": "gf_item_17788673", "name": "Kyllingkebabtallerken", "sizes": ["Standard"]}, {"id": "gf_item_19766893", "name": "Dobbel burger", "sizes": ["200gr + 200gr"]}, {"id": "gf_item_18046629", "name": "Hamburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17783145", "name": "Cheeseburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786621", "name": "BBQ Bacon Cheese Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786623", "name": "BlåmuggostBurger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786627", "name": "Nachosburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786630", "name": "Parmaburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17996124", "name": "Pommes frites", "sizes": ["Standard"]}, {"id": "gf_item_17786657", "name": "Søtpotetfries", "sizes": ["Standard"]}, {"id": "gf_item_17786658", "name": "Mozzarellasticks (5 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17786659", "name": "Løkringer (6 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17787022", "name": "Biffsnadder", "sizes": ["Standard"]}, {"id": "gf_item_24764648", "name": "Kyllingsnadder", "sizes": ["Standard"]}, {"id": "gf_item_19838227", "name": "Hvitløksnadder", "sizes": ["Standard"]}, {"id": "gf_item_19838277", "name": "Fish and chips", "sizes": ["Standard"]}, {"id": "gf_item_19838316", "name": "Løvstek", "sizes": ["Standard"]}, {"id": "gf_item_19838323", "name": "Kyllingsalat", "sizes": ["Standard"]}, {"id": "gf_item_19838325", "name": "Skinkesalat", "sizes": ["Standard"]}, {"id": "gf_item_17820969", "name": "Vegetarburger", "sizes": ["Standard"]}, {"id": "gf_item_17820970", "name": "Vegetarpizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17994559", "name": "Pommes frites", "sizes": ["Standard"]}, {"id": "gf_item_17816461", "name": "Søtpotetfries", "sizes": ["Standard"]}, {"id": "gf_item_17816463", "name": "Mozzarellasticks (5 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17816465", "name": "Løkringer (6 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17820962", "name": "Barneburger", "sizes": ["Standard"]}, {"id": "gf_item_17820963", "name": "Barnepizza", "sizes": ["Standard"]}, {"id": "gf_item_17994561", "name": "Pommes frites", "sizes": ["Standard"]}, {"id": "gf_item_19838407", "name": "Kyllingnuggets (5 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17786784", "name": "Mineralvann 0,5 l", "sizes": ["Standard"]}, {"id": "gf_item_17786787", "name": "Mineralvann 1,5 l", "sizes": ["Standard"]}], "sizes": ["Medium", "Stor", "Standard", "200gr + 200gr"], "extras": ["Biffkjøtt", "Kyllingkjøtt", "Kebabkjøtt", "Bacon", "Skinke", "Pepperoni", "Parmaskinke", "Jalapeño", "Paprika", "Sopp", "Løk", "Mais", "Ekstra ost", "Chips på toppen"], "sauces": ["Hvitløkssaus", "Béarnaisesaus"]};
-const byId = id => document.getElementById(id);
-const cart = [];
-const ink = byId('ink');
-const pen = ink.getContext('2d');
-let strokes = [];
-let pageTop = 0;
-let pointer = null;
-
-function trace(context, paths, xScale, yOffset) {
-  for (const path of paths) {
-    const [first,...rest] = path;
-    context.beginPath();
-    const x = first.x*xScale, y = first.y-yOffset;
-    if (!rest.length) {
-      context.arc(x,y,1.2,0,Math.PI*2);
-      context.fill();
-      continue;
-    }
-    context.moveTo(x,y);
-    for (const point of rest) context.lineTo(point.x*xScale,point.y-yOffset);
-    context.stroke();
+const byId=id=>document.getElementById(id);
+const ink=byId('ink'), pen=ink.getContext('2d');
+const WIDTH=560, MAX_Y=18000, GRID=40;
+const DRAFT_KEY='bestilling-raw-ink-v1';
+const EPSON_DEFAULT={host:'192.168.1.25',scheme:'https',deviceId:'local_printer'};
+const EPOS_NS='http://www.epson-pos.com/schemas/2011/03/epos-print';
+const RASTER_WIDTH=576;
+const formatTime=t=>new Intl.DateTimeFormat('nb-NO',{timeZone:'Europe/Oslo',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(t));
+const formatDate=t=>new Intl.DateTimeFormat('nb-NO',{timeZone:'Europe/Oslo',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(t));
+function newDraft(){
+  const now=Date.now(), date=formatDate(now).replace(/\D/g,'');
+  let seq=1;
+  try{const key='bestilling-raw-seq-'+date;seq=Number(localStorage.getItem(key)||0)+1;localStorage.setItem(key,String(seq));}catch{}
+  return {id:String(seq).padStart(3,'0')+'-'+Math.random().toString(36).slice(2,5).toUpperCase(),created:now,paths:[],printed:false,uncertain:false};
+}
+function loadDraft(){
+  try{
+    const d=JSON.parse(localStorage.getItem(DRAFT_KEY)||'null');
+    if(d&&typeof d.id==='string'&&Number.isFinite(d.created)&&Array.isArray(d.paths)&&d.paths.every(p=>Array.isArray(p)&&p.length&&p.every(v=>Number.isFinite(v.x)&&Number.isFinite(v.y)&&v.x>=0&&v.x<=WIDTH&&v.y>=0&&v.y<=MAX_Y)))return d;
+  }catch{}
+  return newDraft();
+}
+let draft=loadDraft(), pageTop=0, pointer=null, printing=false;
+let viewHeight=1, scale=1, storageOK=true;
+function persist(){
+  try{localStorage.setItem(DRAFT_KEY,JSON.stringify(draft));storageOK=true;}
+  catch{storageOK=false;}
+}
+function status(message='',kind=''){
+  const el=byId('status');el.textContent=message;el.hidden=!message;el.dataset.kind=kind;
+}
+function bounds(paths){
+  let left=Infinity, right=-Infinity, top=Infinity, bottom=-Infinity;
+  for(const path of paths)for(const p of path){left=Math.min(left,p.x);right=Math.max(right,p.x);top=Math.min(top,p.y);bottom=Math.max(bottom,p.y);}
+  return {left,right,top,bottom};
+}
+function trace(ctx,paths,width=3.5){
+  ctx.lineWidth=width;ctx.lineCap='round';ctx.lineJoin='round';
+  for(const path of paths){
+    const first=path[0];if(!first)continue;
+    ctx.beginPath();
+    if(path.length===1){ctx.arc(first.x,first.y,width/2,0,Math.PI*2);ctx.fill();continue;}
+    ctx.moveTo(first.x,first.y);
+    for(let i=1;i<path.length;i++)ctx.lineTo(path[i].x,path[i].y);
+    ctx.stroke();
   }
 }
-function redraw() {
-  if (ink.hidden) return;
-  const width = ink.clientWidth, height = ink.clientHeight;
-  const dpi = window.devicePixelRatio || 1;
-  if (ink.width !== Math.round(width*dpi)) ink.width = Math.round(width*dpi);
-  if (ink.height !== Math.round(height*dpi)) ink.height = Math.round(height*dpi);
-  ink.style.setProperty('--ink-offset',(-pageTop % 34) + 'px');
-  pen.setTransform(dpi,0,0,dpi,0,0);
-  pen.clearRect(0,0,width,height);
-  pen.strokeStyle = pen.fillStyle = '#f2faf4';
-  pen.lineCap = pen.lineJoin = 'round';
-  pen.lineWidth = 2.4;
-  trace(pen,strokes,width,pageTop);
+function redraw(){
+  const w=ink.clientWidth,h=ink.clientHeight;if(!w||!h)return;
+  const dpr=Math.min(window.devicePixelRatio||1,3);
+  scale=w/WIDTH;viewHeight=h/scale;
+  if(ink.width!==Math.round(w*dpr))ink.width=Math.round(w*dpr);
+  if(ink.height!==Math.round(h*dpr))ink.height=Math.round(h*dpr);
+  pen.setTransform(dpr*scale,0,0,dpr*scale,0,-pageTop*dpr*scale);
+  pen.fillStyle='#102a23';pen.fillRect(0,pageTop,WIDTH,viewHeight);
+  pen.strokeStyle='#365348';pen.lineWidth=1;
+  for(let y=Math.ceil(pageTop/GRID)*GRID;y<pageTop+viewHeight;y+=GRID){pen.beginPath();pen.moveTo(0,y);pen.lineTo(WIDTH,y);pen.stroke();}
+  pen.strokeStyle=pen.fillStyle='#f5faf6';trace(pen,draft.paths);
+  controls();
 }
+function controls(){
+  const busy=printing||pointer!==null, has=draft.paths.length>0;
+  for(const id of ['new','clear','undo','up','down','preview','print'])byId(id).disabled=busy;
+  byId('clear').disabled=busy||!has||draft.printed||draft.uncertain;
+  byId('undo').disabled=busy||!has||draft.printed||draft.uncertain;
+  byId('preview').disabled=busy||!has;
+  byId('print').disabled=busy||!has;
+  byId('up').disabled=busy||pageTop===0;
+  byId('down').disabled=busy||!has||pageTop+viewHeight>=MAX_Y;
+  byId('new').disabled=busy;
+  byId('page').textContent='Linje '+(Math.floor(pageTop/GRID)+1)+' – '+Math.max(1,Math.floor((pageTop+viewHeight)/GRID));
+  byId('order-label').textContent='#'+draft.id+' · '+formatTime(draft.created)+(draft.printed?' · Utskrevet':draft.uncertain?' · Ikke bekreftet':'');
+  byId('print-label').textContent=printing?'Skriver ut…':draft.printed?'Skriv ut kopi':draft.uncertain?'Prøv igjen':'Skriv ut';
+}
+function point(e){
+  const r=ink.getBoundingClientRect(),clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
+  return {x:clamp((e.clientX-r.left)/scale,0,WIDTH),y:clamp((e.clientY-r.top)/scale+pageTop,0,MAX_Y)};
+}
+ink.addEventListener('pointerdown',e=>{
+  if(printing||pointer!==null||!e.isPrimary||e.button!==0)return;
+  if(draft.printed||draft.uncertain){status('Velg Ny bestilling for å skrive en ny ordre.');return;}
+  e.preventDefault();pointer=e.pointerId;ink.setPointerCapture(pointer);
+  draft.paths.push([point(e)]);status();redraw();
+});
+ink.addEventListener('pointermove',e=>{
+  if(e.pointerId!==pointer)return;
+  const samples=e.getCoalescedEvents?.();
+  for(const sample of samples?.length?samples:[e])draft.paths.at(-1).push(point(sample));
+  redraw();
+});
+function finish(e){
+  if(e.pointerId!==pointer)return;
+  if(e.type==='pointerup')draft.paths.at(-1).push(point(e));
+  pointer=null;persist();redraw();
+  if(!storageOK)status('Kunne ikke lagre lokalt. Ikke lukk siden før utskrift.','error');
+}
+for(const type of ['pointerup','pointercancel','lostpointercapture'])ink.addEventListener(type,finish);
+byId('undo').onclick=()=>{if(printing||draft.printed||draft.uncertain)return;draft.paths.pop();if(!draft.paths.length)pageTop=0;persist();redraw();};
+byId('clear').onclick=()=>{if(!draft.printed&&!draft.uncertain&&confirm('Tømme hele bestillingen?')){draft.paths=[];pageTop=0;persist();status();redraw();}};
+byId('new').onclick=()=>{
+  if(draft.paths.length&&!draft.printed&&!confirm(draft.uncertain?'Utskriften er ikke bekreftet. Starte ny bestilling likevel?':'Bestillingen er ikke skrevet ut. Starte på nytt?'))return;
+  draft=newDraft();pageTop=0;persist();status();redraw();
+};
+const pageStep=()=>Math.max(GRID,Math.floor(viewHeight*.72/GRID)*GRID);
+byId('up').onclick=()=>{pageTop=Math.max(0,pageTop-pageStep());redraw();};
+byId('down').onclick=()=>{pageTop=Math.max(0,Math.min(pageTop+pageStep(),MAX_Y-viewHeight));redraw();};
 new ResizeObserver(redraw).observe(ink);
-function point(event) {
-  const rect = ink.getBoundingClientRect();
-  const clip = (number,max) => Math.min(max,Math.max(0,number));
-  return {x:clip(event.clientX-rect.left,rect.width)/rect.width,y:clip(event.clientY-rect.top,rect.height)+pageTop};
-}
-ink.addEventListener('pointerdown',event => {
-  if (pointer !== null || !event.isPrimary || event.button !== 0) return;
-  event.preventDefault();
-  pointer = event.pointerId;
-  ink.setPointerCapture(pointer);
-  if (editing) {
-    transcript = [];
-    renderCorrections('',0);
-  } else clearTranscript();
-  strokes.push([point(event)]);
-  redraw();
-});
-ink.addEventListener('pointermove',event => {
-  if (event.pointerId !== pointer) return;
-  const samples = event.getCoalescedEvents?.();
-  for (const sample of samples?.length ? samples : [event]) strokes.at(-1).push(point(sample));
-  redraw();
-});
-for (const type of ['pointerup','pointercancel','lostpointercapture']) {
-  ink.addEventListener(type,event => { if (event.pointerId === pointer) pointer = null; });
-}
-byId('undo').onclick = () => {
-  if (pointer !== null || !strokes.length) return;
-  clearTranscript();
-  strokes.pop();
-  if (!strokes.length) pageTop = 0;
-  redraw();
-};
-function inkImage(paths) {
-  const width = Math.max(ink.clientWidth,320);
-  let left = width, right = 0, top = Infinity, bottom = 0;
-  for (const path of paths) for (const p of path) {
-    left = Math.min(left,p.x*width); right = Math.max(right,p.x*width);
-    top = Math.min(top,p.y); bottom = Math.max(bottom,p.y);
-  }
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.ceil(right-left+16);
-  canvas.height = Math.ceil(bottom-top+16);
-  const context = canvas.getContext('2d');
-  context.translate(8-left,8);
-  context.lineWidth = 2.4;
-  context.lineCap = context.lineJoin = 'round';
-  trace(context,paths,width,top);
-  return canvas.toDataURL();
-}
-let editing = null;
-const normalize = value => value.normalize('NFKC').trim().toLocaleLowerCase('nb').replace(/\s+/g,' ');
-const nameOf = product => product.name.replace(/^\d+\.\s*/u,'');
-const aliases = {
-  "Classico": [
-    "classic",
-    "klassisk"
-  ],
-  "Al Capone": [
-    "capone",
-    "alcapone"
-  ],
-  "Sjefens favoritt": [
-    "sjefen",
-    "sjef",
-    "favoritt"
-  ],
-  "Mexican Style": [
-    "mexican",
-    "mex",
-    "meksikansk"
-  ],
-  "Kebabpizza": [
-    "kebab pizza",
-    "k pizza",
-    "kp"
-  ],
-  "Kyllingpizza": [
-    "kylling pizza",
-    "ky pizza",
-    "chicken pizza"
-  ],
-  "Calzone (innbakt pizza)": [
-    "calzone",
-    "innbakt"
-  ],
-  "Ciao Ciao": [
-    "ciao",
-    "ciaociao"
-  ],
-  "Pollo Marina": [
-    "pollo",
-    "marina"
-  ],
-  "Lag din egen pizza": [
-    "egen pizza",
-    "lag selv"
-  ],
-  "Hvitløksdressing": [
-    "hvitløk dressing",
-    "garlic dressing"
-  ],
-  "Béarnaisesaus": [
-    "bearnaise",
-    "bea saus",
-    "bearnaise saus"
-  ],
-  "Kebabrull": [
-    "k rull",
-    "kr",
-    "kebab rull"
-  ],
-  "Kyllingkebabrull": [
-    "ky rull",
-    "kylling rull",
-    "kylling kebabrull",
-    "chicken roll",
-    "kyllingkebab rull"
-  ],
-  "Kebabtallerken": [
-    "k tall",
-    "kt",
-    "kebab tall",
-    "kebab tallerken"
-  ],
-  "Kyllingkebabtallerken": [
-    "ky tall",
-    "kylling tall",
-    "kyllingkebab tall",
-    "kyllingkebab tallerken"
-  ],
-  "Kebab i pita": [
-    "k pita",
-    "kebab pita"
-  ],
-  "Kyllingkebab i pita": [
-    "ky pita",
-    "kylling pita",
-    "kyllingkebab pita"
-  ],
-  "Dobbel burger": [
-    "dobbel",
-    "double",
-    "double burger"
-  ],
-  "Hamburger Tallerken": [
-    "h tall",
-    "ham tall",
-    "hamburger",
-    "hamburger tall"
-  ],
-  "Cheeseburger Tallerken": [
-    "cheese",
-    "cheeseburger",
-    "cheese tall",
-    "osteburger"
-  ],
-  "BBQ Bacon Cheese Tallerken": [
-    "bbq",
-    "bbq bacon",
-    "bbq burger",
-    "bacon cheese"
-  ],
-  "BlåmuggostBurger Tallerken": [
-    "blue",
-    "blue burger",
-    "blå",
-    "blåmuggost",
-    "blåmuggost burger",
-    "blå burger",
-    "blue cheese",
-    "blue cheese burger"
-  ],
-  "Nachosburger Tallerken": [
-    "nachos",
-    "nachos burger",
-    "nachosburger"
-  ],
-  "Parmaburger Tallerken": [
-    "parma burger",
-    "parma tall",
-    "parmaburger"
-  ],
-  "Pommes frites": [
-    "pommes",
-    "fries",
-    "chips"
-  ],
-  "Søtpotetfries": [
-    "søtpotet",
-    "sweet potato fries"
-  ],
-  "Mozzarellasticks (5 stk.)": [
-    "mozzarella sticks",
-    "mozzarellasticks",
-    "mozza sticks"
-  ],
-  "Løkringer (6 stk.)": [
-    "løkringer",
-    "onion rings"
-  ],
-  "Biffsnadder": [
-    "biff snadder",
-    "b snadder"
-  ],
-  "Kyllingsnadder": [
-    "ky snadder",
-    "kylling snadder",
-    "chicken snadder"
-  ],
-  "Hvitløksnadder": [
-    "hvitløk snadder"
-  ],
-  "Fish and chips": [
-    "fish chips",
-    "fish & chips",
-    "fish"
-  ],
-  "Løvstek": [
-    "løv stek"
-  ],
-  "Kyllingsalat": [
-    "ky salat",
-    "kylling salat",
-    "chicken salad"
-  ],
-  "Skinkesalat": [
-    "skinke salat"
-  ],
-  "Vegetarburger": [
-    "veg burger",
-    "veggie burger",
-    "veggieburg"
-  ],
-  "Vegetarpizza": [
-    "veg pizza",
-    "veggie pizza"
-  ],
-  "Barneburger": [
-    "barn burger",
-    "kids burger"
-  ],
-  "Barnepizza": [
-    "barn pizza",
-    "kids pizza"
-  ],
-  "Kyllingnuggets (5 stk.)": [
-    "nuggets",
-    "chicken nuggets",
-    "kylling nuggets"
-  ],
-  "Mineralvann 0,5 l": [
-    "brus 0,5",
-    "liten brus",
-    "brus 0.5"
-  ],
-  "Mineralvann 1,5 l": [
-    "brus 1,5",
-    "stor brus",
-    "brus 1.5"
-  ]
-};
-const fold = text => normalize(text).normalize('NFD').replace(/\p{Mark}/gu,'').replace(/ø/g,'o').replace(/æ/g,'ae');
-const escapePattern = text => text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-const compactName = value => fold(value).replace(/[^a-z0-9]/g,'');
-const genericWords = new Set(['pizza','burger','tallerken','rull','salat','saus','dressing','frites','fries','chips','snadder','stek','mineralvann','pita','med','og','i','and','stk','l']);
-function menuWords(name) {
-  return fold(name.replace(/\([^)]*\)/g,''))
-    .replace(/(kylling)(?=kebab)/g,'$1 ')
-    .replace(/([a-z])(?=(?:pizza|burger|tallerken|rull|salat|saus|dressing|fries|snadder|stek)\b)/g,'$1 ')
-    .match(/[a-z]+/g) || [];
-}
-function inferredKeys(name) {
-  const words = menuWords(name);
-  const significant = words.filter(word=>!['og','med','i','and'].includes(word));
-  const keys = new Set();
-  if (words.length>1) keys.add(words.join(' ')).add(words.join(''));
-  if (significant.length>1) {
-    keys.add(significant.map(word=>word[0]).join(''));
-    const first = significant[0];
-    const last = significant.at(-1);
-    keys.add(first+' '+last);
-    if (last==='tallerken') keys.add(first+' tall');
-    if (first.length>2) keys.add(first+' '+last[0]);
-  }
-  for (const word of significant) if (word.length>=4 && !genericWords.has(word)) keys.add(word);
-  return [...keys];
-}
-const rules = catalog.products.flatMap(product => {
-  const name = nameOf(product);
-  const keys = new Map(inferredKeys(name).map(key=>[key,0]));
-  for (const key of aliases[name] || []) keys.set(key,1);
-  keys.set(product.name,2).set(name,2);
-  const number = product.name.match(/^(\d+)\./)?.[1];
-  if (number) for (const key of [number,'nr '+number,'pizza '+number]) keys.set(key,2);
-  return [...keys].map(([key,priority]) => ({
-    product,priority,
-    spelling: compactName(key),
-    pattern: new RegExp('^'+fold(key).split(' ').map(escapePattern).join('[ .-]+')+'(?=$|[\\s,;+−-]|[x×]\\s*\\d)','u')
-  }));
-});
-function productMatches(text) {
-  const folded = fold(text);
-  let bestLength = 0;
-  let bestPriority = -1;
-  const hits = new Map();
-  for (const {product,pattern,priority} of rules) {
-    const match = folded.match(pattern);
-    if (!match) continue;
-    const length = match[0].length;
-    if (length<bestLength || (length===bestLength && priority<bestPriority)) continue;
-    if (length>bestLength || priority>bestPriority) hits.clear();
-    bestLength=length;
-    bestPriority=priority;
-    hits.set(JSON.stringify([nameOf(product),product.sizes]),product);
-  }
-  let end=0;
-  while (end<text.length && fold(text.slice(0,end)).length<bestLength) end++;
-  return [...hits.values()].map(product=>({product,tail:text.slice(end).trim()}));
-}
-function matchProduct(text) {
-  const hits = productMatches(text);
-  return hits.length===1 ? hits[0] : null;
-}
-
-function parseLine(source) {
-  let text = normalize(source)
-    .replace(/^((?:\d{1,2}\s*[x×]\s*)?)m\.?\s*(?=\d{1,2}(?!\d)(?:$|[\s,+−-]|[x×]\s*\d))/u,'$1medium ')
-    .replace(/^((?:\d{1,2}\s*[x×]\s*)?\d{1,2})\s*m\.?(?=$|[\s,+−-]|[x×]\s*\d)/u,'$1 medium');
-  const firstCount = text.match(/^(\d{1,2})\s*[x×]\s*/u);
-  if (firstCount) text = text.slice(firstCount[0].length);
-  const firstSize = text.match(/^(st\.?|stor|medium)\s+/u);
-  const match = matchProduct(firstSize ? text.slice(firstSize[0].length) : text);
-  if (!match) return null;
-  const {product} = match;
-  let tail = match.tail;
-  const earlyCount = tail.match(/^[x×]\s*(\d{1,2})(?=$|[\s,+−-])/u);
-  if (earlyCount) tail = tail.slice(earlyCount[0].length).trim();
-  let size = firstSize?.[1].startsWith('st') ? 'stor' : firstSize?.[1] || '';
-  const lastSize = tail.match(/^(st\.?|stor|medium(?!\s+(?:sos|saus)\b))(?=$|[\s,+−-]|[x×]\s*\d)/u);
-  if (lastSize) {
-    const value = lastSize[1].startsWith('st') ? 'stor' : 'medium';
-    if (size && size !== value) return null;
-    size = value;
-    tail = tail.slice(lastSize[0].length).trim();
-  }
-  const menuSize = product.sizes.find(option => normalize(option) === size);
-  if (size && !menuSize) return null;
-  const notes = [];
-  const sauce = tail.match(/^(med(?:ium(?:\s+(?:sos|saus))?)?|sterk(?:\s+saus)?|mild(?:\s+saus)?)(?=$|[\s,+−-]|[x×]\s*\d)/u);
-  if (sauce) {
-    notes.push(sauce[1].startsWith('med') ? 'Medium sos' : sauce[1].startsWith('sterk') ? 'Sterk saus' : 'Mild saus');
-    tail = tail.slice(sauce[0].length).trim();
-  }
-  const lastCount = tail.match(/^[x×]\s*(\d{1,2})(?=$|[\s,+−-])/u);
-  const counts = [firstCount,earlyCount,lastCount].filter(Boolean).map(value=>Number(value[1]));
-  if (new Set(counts).size > 1) return null;
-  const quantity = counts[0] ?? 1;
-  if (quantity < 1) return null;
-  if (lastCount) tail = tail.slice(lastCount[0].length).trim();
-  if (tail && !/^(?:[,;+−-]|\d{1,2}\s*[x×]|uten\b|ingen\b|ekstra\b|soğansız\b|sogansiz\b)/u.test(tail)) return null;
-  const pieces = tail.split(/[,;]|(?<![x×])\s+(?=[+−-]\s*\p{L})/u).map(note=>note.trim()).filter(Boolean);
-  const onion = new Map();
-  for (const piece of pieces) {
-    const m = piece.match(/^(?:(\d{1,2})\s*[x×]\s*)?([+−-]\s*l[øo]k|(?:ingen|uten|ekstra)\s+l[øo]k|soğansız|sogansiz)(?:\s*[x×]\s*(\d{1,2}))?$/u);
-    if (m) {
-      if (m[1] && m[3] && Number(m[1])!==Number(m[3])) return null;
-      const count = Number(m[1] || m[3] || quantity);
-      const extra = m[2].startsWith('+') || m[2].startsWith('ekstra');
-      if (!count || count > quantity || onion.has(extra) || count+(onion.get(!extra)||0)>quantity) return null;
-      onion.set(extra,count);
-      notes.push((count < quantity ? count + ' ' : '') + (extra ? 'Ekstra løk' : 'Uten løk'));
-    } else {
-      if (/\d\s*[x×]|[x×]\s*\d|^[−-]\s*$|^\+\s*$/u.test(piece)) return null;
-      const note = piece.replace(/^[−-]\s*/u,'uten ').replace(/^\+\s*/u,'').replace(/^ingen\s+/u,'uten ');
-      notes.push(note.replace(/^(?:chips|pommes(?: frites)?)(?: på toppen)?$/u,'pommes frites på toppen'));
-    }
-  }
-  return { source, quantity, name: [menuSize,nameOf(product)].filter(Boolean).join(' '), notes };
-}
-
-function searchMenuLine(source) {
-  if (source.includes('?') || source.length > 120) return null;
-  const clean = normalize(source);
-  const prefix = clean.match(/^(?:\d{1,2}\s*[x×]\s*)?(?:(?:st\.?|stor|medium)\s+)?/u)[0];
-  const remainder = clean.slice(prefix.length);
-  if (productMatches(remainder).length > 1) return null;
-  const boundary = remainder.search(/[,;+−]|-(?=\s*\p{L})|\s+(?=(?:\d{1,2}\s*[x×]|[x×]\s*\d|st\.?\b|stor\b|medium\b|med\b|mild\b|sterk\b|uten\b|ingen\b|ekstra\b))/u);
-  const head = boundary < 0 ? remainder : remainder.slice(0,boundary);
-  const tail = boundary < 0 ? '' : remainder.slice(boundary).trim();
-  if (!/^[\p{L}.\s]+$/u.test(head)) return null;
-  const hints = fold(head).match(/[a-z]+/g) || [];
-  if (hints.length < 2 || hints.length > 5 || hints.some(hint=>hint.length < 3)) return null;
-  const matches = new Map();
-  for (const product of catalog.products) {
-    const words = menuWords(nameOf(product));
-    const used = new Set();
-    if (!hints.map((hint,index)=>index).sort((a,b)=>hints[b].length-hints[a].length).every(index=>{
-      const word = words.find(token=>!used.has(token) && token.startsWith(hints[index]));
-      if (!word) return false;
-      used.add(word);
-      return true;
-    })) continue;
-    const row = parseLine([prefix+product.name,tail].filter(Boolean).join(' '));
-    if (row) matches.set(row.name,row);
-  }
-  return matches.size===1 ? matches.values().next().value : null;
-}
-
-function spellingDistance(a,b) {
-  let previous = Array.from({length:b.length+1},(_,i)=>i);
-  let earlier;
-  for (let i=1;i<=a.length;i++) {
-    const current = [i];
-    for (let j=1;j<=b.length;j++) {
-      current[j] = Math.min(previous[j]+1,current[j-1]+1,previous[j-1]+Number(a[i-1]!==b[j-1]));
-      if (i>1 && j>1 && a[i-1]===b[j-2] && a[i-2]===b[j-1]) {
-        current[j] = Math.min(current[j], earlier[j-2]+1);
-      }
-    }
-    earlier=previous;
-    previous=current;
-  }
-  return previous[b.length];
-}
-
-function similarOrders(source) {
-  const text = source.trim();
-  if (!text || text.length>120) return [];
-  const clean = normalize(text).replace(/\?+$/u,'').trim();
-  // A handwritten 1 can be transcribed as I or l.
-  const numeral = clean.match(/^(m\.?|st\.?|stor|medium)\s*[il](?=$|[\s,;+−-])/u);
-  const pepperoni = clean.match(/^(m\.?|st\.?|stor|medium)\s*(?:pep\.?|pepperoni)(?=$|[\s,;+−-]|[x×]\s*\d)/u);
-  if (numeral || pepperoni) {
-    const shorthand = numeral || pepperoni;
-    const size = shorthand[1].startsWith('m') ? 'Medium' : 'Stor';
-    const rest = clean.slice(shorthand[0].length).trim();
-    const replacement = size+' 1'+(rest ? ' '+rest : '')+(pepperoni ? ', bare pepperoni' : '');
-    const row = parseLine(replacement);
-    if (row) return [{row,replacement}];
-  }
-  const prefix = text.match(/^(?:(?:\d{1,2}\s*[x×]\s*)?(?:stor|medium)\s+|\d{1,2}\s*[x×]\s*)/iu)?.[0] || '';
-  const remainder = text.slice(prefix.length).replace(/\?+$/u,'').trimEnd();
-  const candidates = new Map();
-  const exact = productMatches(normalize(remainder));
-  if (exact.length>1) {
-    return exact.map(({product,tail}) => {
-      const replacement = [prefix+product.name,tail].filter(Boolean).join(' ');
-      return {row:parseLine(replacement),replacement};
-    }).filter(item=>item.row);
-  }
-  for (const word of remainder.matchAll(/[\p{L}]+(?=\s|[,;.+−-]|$)/gu)) {
-    const end = word.index+word[0].length;
-    const head = remainder.slice(0,end);
-    if (!/^[\p{L} .-]+$/u.test(head)) break;
-    const key = compactName(head);
-    if (key.length<4 || key.length>24) continue;
-    const maximum = key.length>=8 ? 2 : 1;
-    for (const {product,spelling} of rules) {
-      if (!/^[a-z]+$/.test(spelling) || Math.abs(spelling.length-key.length)>maximum) continue;
-      const distance = spellingDistance(key,spelling);
-      if (distance>maximum) continue;
-      const replacement = prefix+product.name+remainder.slice(end);
-      const row = parseLine(replacement);
-      if (!row) continue;
-      const score = distance / Math.max(key.length,spelling.length);
-      const label = row.name;
-      const other = candidates.get(label);
-      if (!other || score<other.score) candidates.set(label,{row,replacement,score});
-    }
-  }
-  return [...candidates.values()].sort((a,b)=>a.score-b.score).slice(0,2);
-}
-
-function renderCorrections(source,index) {
-  const area = byId('corrections');
-  const options = source ? similarOrders(source) : [];
-  area.replaceChildren(...options.map(({row,replacement}) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.textContent = row.quantity+'× '+row.name+(row.notes.length ? ' · '+row.notes.join(' · ') : '');
-    button.onclick = () => {
-      if (transcript[index]!==source) return;
-      transcript[index]=replacement;
-      submitTranscript();
-    };
-    return button;
-  }));
-  area.hidden = !options.length;
-}
-
-function updateCartVisibility() {
-  byId('cart').hidden = !cart.length && byId('status').hidden && byId('corrections').hidden;
-}
-function showStatus(message) {
-  const status = byId('status');
-  status.textContent = message;
-  status.hidden = !message;
-  updateCartVisibility();
-}
-let transcript = [];
-byId('next-line').onclick = () => {
-  if (pointer !== null || !strokes.length) return;
-  const bottom = strokes.reduce((max,path) => path.reduce((end,p) => Math.max(end,p.y),max),pageTop);
-  pageTop = Math.max(pageTop,Math.floor((bottom-44)/34)*34);
-  redraw();
-};
-function clearTranscript() {
-  transcript = [];
-  renderCorrections('',0);
-  showStatus('');
-}
-function resetEditor() {
-  editing = null;
-  clearTranscript();
-  strokes = [];
-  pageTop = 0;
-  pointer = null;
-  redraw();
-}
-byId('clear').onclick = resetEditor;
-function inkSignature(paths, width, height) {
-  const points = paths.flat();
-  if (points.length < 2) return null;
-  const xs = points.map(([x]) => x * width);
-  const ys = points.map(([, y]) => y * height);
-  const left = Math.min(...xs);
-  const top = Math.min(...ys);
-  const spanX = Math.max(...xs) - left;
-  const spanY = Math.max(...ys) - top;
-  const scale = Math.max(spanX, spanY);
-  if (scale < 12) return null;
-  const cells = new Set();
-  for (const path of paths) {
-    let previous;
-    for (const [x, y] of path) {
-      const current = [(x * width - left) * 23 / scale, (y * height - top) * 23 / scale];
-      const start = previous || current;
-      const steps = Math.max(1, Math.ceil(Math.hypot(current[0] - start[0], current[1] - start[1])));
-      for (let step = 0; step <= steps; step++) {
-        const px = Math.round(start[0] + (current[0] - start[0]) * step / steps);
-        const py = Math.round(start[1] + (current[1] - start[1]) * step / steps);
-        cells.add(px + 24 * py);
-      }
-      previous = current;
-    }
-  }
-  return [...cells];
-}
-
-function inkDistance(first, second) {
-  function averageNearest(source, target) {
-    let sum = 0;
-    for (const cell of source) {
-      const x = cell % 24;
-      const y = Math.floor(cell / 24);
-      let nearest = Infinity;
-      for (const other of target) {
-        const dx = x - other % 24;
-        const dy = y - Math.floor(other / 24);
-        nearest = Math.min(nearest, dx * dx + dy * dy);
-        if (nearest === 0) break;
-      }
-      sum += Math.sqrt(nearest);
-    }
-    return sum / source.length;
-  }
-  return (averageNearest(first, second) + averageNearest(second, first)) / 2;
-}
-
-
-function storedExamples(key) {
-  try {
-    const value = JSON.parse(localStorage.getItem(key) || '{}');
-    return value && typeof value === 'object' ? value : {};
-  } catch { return {}; }
-}
-
-function recognizeSavedProduct(paths) {
-  const width = ink.clientWidth;
-  if (!width) return null;
-  const signature = inkSignature(paths.map(path => path.map(({x,y}) => [x,y])),width,1);
-  if (!signature) return null;
-  const scores = new Map();
-  const legacyNames = {roll:'Kebabrull',plate:'Kebabtallerken',pizza:'Stor Pepperoni'};
-  const legacy = storedExamples('bestilling-handwriting-v1');
-  const modern = storedExamples('bestilling-ink-v2').product || {};
-  function compare(product, examples, limit) {
-    if (!product || !Array.isArray(examples)) return;
-    for (const sample of examples.slice(-8)) {
-      if (!Array.isArray(sample) || !sample.length || sample.length > 576 ||
-          !sample.every(cell => Number.isInteger(cell) && cell >= 0 && cell < 576)) continue;
-      const score = inkDistance(signature, sample);
-      if (!scores.has(product) || score < scores.get(product).score) scores.set(product,{product,score,limit});
-    }
-  }
-  for (const [key,name] of Object.entries(legacyNames)) compare(parseLine(name)?.name,legacy[key],2.2);
-  for (const product of catalog.products) compare(nameOf(product),modern[product.id],1.8);
-  const [best,second] = [...scores.values()].sort((a,b) => a.score-b.score);
-  if (!best || best.score > best.limit || (second && second.score-best.score < .45)) return null;
-  return {source:best.product,name:best.product,quantity:1,notes:[]};
-}
-
-const connection = new URLSearchParams(location.hash.slice(1));
-const suppliedEndpoint = connection.get('gemini');
-const suppliedToken = connection.get('access');
-let recognition = null;
-let readingInk = false;
-try {
-  if (suppliedEndpoint && suppliedToken) {
-    const url = new URL(suppliedEndpoint);
-    if (url.protocol === 'https:' && url.hostname.endsWith('.workers.dev') && !url.username && !url.password) {
-      recognition = {endpoint:url.href,token:suppliedToken};
-      sessionStorage.setItem('bestilling-gemini',JSON.stringify(recognition));
-      history.replaceState(null,'',location.pathname+location.search);
-    }
-  } else {
-    recognition = JSON.parse(sessionStorage.getItem('bestilling-gemini') || 'null');
-  }
-} catch {}
-
-async function readInk(paths) {
-  readingInk = true;
-  const button = byId('ok');
-  button.disabled = true;
-  button.setAttribute('aria-busy','true');
-  try {
-    const image = inkImage(paths);
-    const response = await fetch(recognition.endpoint,{
-      method:'POST',
-      headers:{'Content-Type':'application/json',Authorization:'Bearer '+recognition.token},
-      body:JSON.stringify({image:image.split(',')[1]}),
-      signal:AbortSignal.timeout(15000)
-    });
-    if (!response.ok) throw Error('Recognition failed');
-    const {text} = await response.json();
-    if (strokes !== paths || inkImage(paths) !== image) return;
-    if (typeof text !== 'string' || !text.trim()) { showStatus('Kunne ikke lese håndskriften.'); return; }
-    transcript = text.trim().split(/\r?\n/u).map(line=>line.trim()).filter(Boolean);
-    submitTranscript();
-  } catch {
-    if (strokes === paths) showStatus('Kunne ikke lese nå. Håndskriften er beholdt.');
-  } finally {
-    readingInk = false;
-    button.disabled = false;
-    button.removeAttribute('aria-busy');
-  }
-}
-
-function saveRows(rows) {
-  if (editing) cart.splice(cart.indexOf(editing),1,rows[0]);
-  else cart.push(...rows);
-  latest = rows.at(-1);
-  resetEditor();
-  render();
-}
-function submitTranscript() {
-  if (editing && transcript.length!==1) {
-    showStatus('Skriv én varelinje når du redigerer.');
-    return;
-  }
-  const rows = transcript.map(line=>line.includes('?') ? null : parseLine(line) || searchMenuLine(line));
-  const unknown = rows.indexOf(null);
-  if (unknown>=0) {
-    renderCorrections(transcript[unknown],unknown);
-    showStatus((byId('corrections').hidden ? 'Skriv linjen på nytt: ' : 'Mente du dette? Linje '+(unknown+1)+': ')+transcript[unknown]);
-    return;
-  }
-  saveRows(rows);
-}
-byId('ok').onclick = () => {
-  if (readingInk || pointer !== null) return;
-  if (!strokes.length) { showStatus('Skriv bestillingen først.'); return; }
-  if (transcript.length) { submitTranscript(); return; }
-  if (recognition) { void readInk(strokes); return; }
-  const row = recognizeSavedProduct(strokes);
-  if (!row) { showStatus('Ukjent vare. Håndskriften er beholdt.'); return; }
-  saveRows([row]);
-};
-
-let latest = null;
-function makeItem(row, actionable) {
-  const li = document.createElement('li');
-  const content = document.createElement('div');
-  const title = document.createElement('strong');
-  title.textContent = row.quantity ? row.quantity + '× ' + row.name : row.name;
-  content.append(title);
-  if (row.notes.length) {
-    const notes = document.createElement('small');
-    notes.textContent = row.notes.join(' · ');
-    content.append(notes);
-  }
-  if (row.image) {
-    const image = document.createElement('img');
-    image.className = 'ink-preview';
-    image.alt = 'Håndskrevet merknad';
-    image.src = row.image;
-    content.append(image);
-  }
-  li.append(content);
-  if (!actionable) return li;
-  for (const [icon,label,css,action] of [
-    ['✎','Endre','',() => {
-      if (byId('basket').open) byId('basket').close();
-      editing = row;
-      clearTranscript();
-      strokes = row.ink ? row.ink.map(path => [...path]) : [];
-      pageTop = 0;
-      redraw();
-      render();
-      showStatus('Endrer '+row.quantity+'× '+row.name+(row.notes.length ? ' · '+row.notes.join(' · ') : '')+'. Skriv hele linjen og trykk ✓.');
-    }],
-    ['×','Fjern','remove',() => {
-      cart.splice(cart.indexOf(row),1);
-      if (editing === row) resetEditor();
-      if (latest === row) latest = cart.at(-1) || null;
-      render();
-    }]
-  ]) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'icon ' + css;
-    button.textContent = icon;
-    button.setAttribute('aria-label',label+' '+row.name);
-    button.onclick = action;
-    li.append(button);
-  }
-  return li;
-}
-function render() {
-  byId('latest').replaceChildren(...(latest ? [makeItem(latest,true)] : []));
-  byId('basket-lines').replaceChildren(...[...cart].reverse().map(row=>makeItem(row,true)));
-  byId('print-lines').replaceChildren(...cart.map(row=>makeItem(row,false)));
-  byId('all').hidden = !cart.length;
-  byId('total').hidden = !cart.length;
-  updateCartVisibility();
-  byId('all').textContent = 'Vis alle (' + cart.length + ')';
-  const raw = cart.filter(row=>!row.quantity).length;
-  byId('total').textContent = cart.reduce((sum,row)=>sum+row.quantity,0) + ' stk' + (raw ? ' · ' + raw + ' notat' : '');
-  byId('print').disabled = printing || !cart.length;
-  byId('ok').setAttribute('aria-label',editing ? 'Lagre endring' : 'Legg til bestilling');
-}
-byId('all').onclick = () => byId('basket').showModal();
-const EPSON_DEFAULT = {
-  host: '192.168.1.25',
-  scheme: 'https',
-  deviceId: 'local_printer'
-};
-const EPOS_NS = 'http://www.epson-pos.com/schemas/2011/03/epos-print';
-
-const RASTER_WIDTH = 576;
-function renderManualReceipt(rows) {
-  if (!rows.length) throw Error('Ingen varer å skrive ut.');
-  const canvas = document.createElement('canvas');
-  canvas.width = RASTER_WIDTH;
-  canvas.height = 100;
-  const c = canvas.getContext('2d', {willReadFrequently:true});
-  if (!c) throw Error('Kan ikke tegne bestillingslappen.');
-  const left=6, qty=83, check=510, right=570;
-  const font=(size,bold=false)=>{c.font=(bold?'700 ':'400 ')+size+'px Arial, sans-serif';};
-  const wrap=(value,width,size,bold=false)=>{
-    font(size,bold);
-    const out=[];
-    for(const paragraph of String(value ?? '').split(/\r?\n/)){
-      let line='';
-      for(const word of paragraph.trim().split(/\s+/).filter(Boolean)){
-        const next=line?line+' '+word:word;
-        if(line&&c.measureText(next).width>width){out.push(line);line=word;}else line=next;
-        while(line.length>1&&c.measureText(line).width>width){
-          let n=line.length-1;
-          while(n>1&&c.measureText(line.slice(0,n)).width>width)n--;
-          out.push(line.slice(0,n));line=line.slice(n);
-        }
-      }
-      if(line)out.push(line);
-    }
-    return out.length?out:[''];
-  };
-  const entries=rows.map(row=>{
-    const names=wrap(row.name,check-qty-20,36,true);
-    const notes=(row.notes||[]).flatMap(note=>wrap('– '+note,check-qty-20,29,true));
-    return {quantity:row.quantity?String(row.quantity)+'x':'—',names,notes,height:Math.max(68,20+names.length*43+notes.length*35)};
-  });
-  const tableTop=155, headerHeight=48;
-  const bottom=tableTop+headerHeight+entries.reduce((n,row)=>n+row.height,0);
-  if(bottom+85>24000)throw Error('Bestillingen er for lang for én utskrift.');
-  canvas.height=bottom+85;
+function renderManualReceipt(source,copy=false){
+  if(!source.paths.length)throw Error('Skriv bestillingen først.');
+  const b=bounds(source.paths), top=Math.max(0,b.top-12), bottom=Math.min(MAX_Y+12,b.bottom+12);
+  const inkHeight=Math.ceil(bottom-top), bodyHeight=Math.max(56,inkHeight);
+  const header=166, footer=43, contentEnd=header+bodyHeight;
+  const canvas=document.createElement('canvas');canvas.width=RASTER_WIDTH;canvas.height=contentEnd+footer;
+  if(canvas.height>19000)throw Error('Bestillingen er for lang.');
+  const c=canvas.getContext('2d',{willReadFrequently:true});if(!c)throw Error('Kunne ikke lage utskriften.');
   c.fillStyle='#fff';c.fillRect(0,0,canvas.width,canvas.height);
-  c.fillStyle='#000';c.strokeStyle='#000';c.lineWidth=3;c.textBaseline='top';
-  const center=(value,x,y,size,bold=false,maxWidth=550)=>{
-    font(size,bold);c.textAlign='center';c.fillText(value,x,y,maxWidth);c.textAlign='left';
-  };
-  const line=(x1,y1,x2,y2)=>{c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();};
-  center('KJØKKENBESTILLING',288,12,44,true);
-  center('MANUELL BESTILLING',288,64,29,true);
-  center(new Intl.DateTimeFormat('nb-NO',{timeZone:'Europe/Oslo',dateStyle:'short',timeStyle:'short'}).format(new Date()),288,106,28);
-  c.fillRect(left,tableTop,right-left,headerHeight);
-  c.fillStyle='#fff';
-  center('ANT.',(left+qty)/2,tableTop+10,26,true,qty-left-6);
-  font(29,true);c.fillText('VARE',qty+10,tableTop+8);
-  center('OK',(check+right)/2,tableTop+10,24,true,right-check-6);
-  c.fillStyle='#000';
-  let y=tableTop+headerHeight;
-  for(const entry of entries){
-    center(entry.quantity,(left+qty)/2,y+12,35,true,qty-left-8);
-    let textY=y+10;
-    font(36,true);
-    for(const name of entry.names){c.fillText(name,qty+10,textY);textY+=43;}
-    font(29,true);
-    for(const note of entry.notes){c.fillText(note,qty+10,textY);textY+=35;}
-    c.strokeRect(check+(right-check-31)/2,y+16,31,31);
-    y+=entry.height;line(left,y,right,y);
-  }
-  line(left,tableTop,left,bottom);line(qty,tableTop+headerHeight,qty,bottom);
-  line(check,tableTop+headerHeight,check,bottom);line(right,tableTop,right,bottom);
-  font(32,true);
-  const total=rows.reduce((sum,row)=>sum+(Number(row.quantity)||0),0);
-  c.fillText('Totalt: '+total+' stk',left+4,bottom+19);
+  c.fillStyle=c.strokeStyle='#000';c.textBaseline='top';c.lineWidth=2;
+  const font=(size,bold=false)=>{c.font=(bold?'700 ':'400 ')+size+'px Arial,sans-serif';};
+  const center=(s,y,size,bold=false)=>{font(size,bold);c.textAlign='center';c.fillText(s,288,y,550);c.textAlign='left';};
+  center(copy?'KOPI · KJØKKEN':'KJØKKENBESTILLING',8,43,true);
+  font(31,true);c.fillText('#'+source.id,10,65,270);c.textAlign='right';c.fillText(formatTime(source.created),566,65,220);c.textAlign='left';
+  center(formatDate(source.created)+' · Manuell bestilling',106,25);
+  c.fillRect(7,139,562,27);c.fillStyle='#fff';font(19,true);c.fillText('BESTILLING',15,142);c.fillStyle='#000';
+  c.save();c.beginPath();c.rect(7,header,562,bodyHeight);c.clip();c.translate(8,header-top);trace(c,source.paths,4.2);c.restore();
+  c.strokeRect(7,header,562,bodyHeight);
+  font(22,true);c.fillText('Kjøkken',10,contentEnd+10);
+  font(22);c.textAlign='right';c.fillText('Kontrollert',531,contentEnd+10);c.textAlign='left';c.strokeRect(539,contentEnd+10,23,23);
   return canvas;
 }
+byId('preview').onclick=()=>{
+  try{byId('preview-image').src=renderManualReceipt(draft,draft.printed||draft.uncertain).toDataURL('image/png');byId('preview-dialog').showModal();}
+  catch(e){status(e.message,'error');}
+};
 function packed1BitRaster(canvas) {
   const width = canvas.width;
   const rowBytes = width / 8;
@@ -996,11 +242,11 @@ function printerSettings() {
   return { host, scheme, deviceId };
 }
 
-async function printManualTicket(rows) {
+async function printManualTicket(canvas) {
   const config = printerSettings();
   const endpoint = config.scheme + '://' + config.host +
     '/cgi-bin/epos/service.cgi?devid=' + encodeURIComponent(config.deviceId) + '&timeout=10000';
-  const content = packed1BitRaster(renderManualReceipt(rows));
+  const content = packed1BitRaster(canvas);
   // Epson TM-T20II ePOS-Print 5.0: send SOAP directly to the configured printer.
   const body = '<?xml version="1.0" encoding="UTF-8"?>' +
     '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>' +
@@ -1041,32 +287,28 @@ async function printManualTicket(rows) {
 
 
 
-let printing = false;
-byId('print').onclick = async () => {
-  if (printing || !cart.length) return;
-  if (readingInk || pointer !== null || editing || strokes.length || transcript.length) {
-    showStatus('Fullfør eller tøm håndskriften før utskrift.');
-    return;
-  }
-  printing = true;
-  const button = byId('print');
-  button.disabled = true;
-  button.setAttribute('aria-busy','true');
-  const rows = cart.map(row=>({...row,notes:[...(row.notes||[])]}));
-  showStatus('Skriver ut…');
-  try {
-    await printManualTicket(rows);
-    showStatus('Utskrift bekreftet av Epson.');
-  } catch (error) {
-    showStatus(error.message || 'Utskrift ikke bekreftet. Sjekk skriveren.');
-  } finally {
-    printing = false;
-    button.removeAttribute('aria-busy');
-    button.disabled = !cart.length;
-  }
-};
 
-render();
+byId('print').onclick=async()=>{
+  if(printing||pointer!==null||!draft.paths.length)return;
+  const copy=!!(draft.printed||draft.uncertain);
+  if(copy&&!confirm(draft.uncertain?'Sjekk om første utskrift kom. Skrive ut en merket kopi?':'Skrive ut en kopi av bestillingen?'))return;
+  let canvas;
+  try{canvas=renderManualReceipt(draft,copy);}
+  catch(e){status(e.message,'error');return;}
+  printing=true;
+  // Persist uncertain state before transmitting: reload cannot silently resend.
+  if(!draft.printed)draft.uncertain=true;
+  persist();controls();status('Sender til Epson…');
+  try{
+    await printManualTicket(canvas);
+    draft.printed=true;draft.uncertain=false;persist();
+    status('Utskrift bekreftet av Epson. Velg Ny bestilling.','ok');
+  }catch(e){
+    persist();status((e.message||'Utskrift ikke bekreftet.')+' Bestillingen er beholdt.','error');
+  }finally{printing=false;controls();}
+};
+persist();redraw();
+if(draft.uncertain)status('Forrige utskrift ble ikke bekreftet. Kontroller skriveren før du prøver igjen.','error');
 </script>
 </body>
 </html>
