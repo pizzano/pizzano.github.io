@@ -6,97 +6,400 @@
 <title>Manuell bestilling</title>
 <style>
 * { box-sizing: border-box }
-body { margin: 0; background: #edf3f0; color: #142b23; font: 16px system-ui,sans-serif }
-main { max-width: 42rem; height: 100dvh; margin: auto; padding: 8px; display: grid; grid-template-rows: auto minmax(0,1fr) auto; gap: 8px }
-h1 { margin: 0; font-size: 20px }
-#pad { display: block; width: 100%; height: 100%; background: white; border: 1px solid #778e82; border-radius: 10px; touch-action: none; cursor: crosshair }
-nav { display: flex; gap: 8px; padding-bottom: env(safe-area-inset-bottom) }
-button { min-height: 44px; border: 1px solid #9aada2; border-radius: 8px; padding: 6px 12px; background: white; color: inherit; font: inherit; font-weight: 650; cursor: pointer }
+[hidden] { display: none !important }
+body { margin: 0; color: #142b23; background: #edf3f0; font: 16px system-ui,sans-serif }
+main { max-width: 42rem; height: 100dvh; margin: auto; padding: 8px; display: grid; gap: 6px; grid-template-rows: auto minmax(0,1.7fr) auto minmax(0,1fr) auto }
+header, nav, footer, .heading, li, .note-label { display: flex; align-items: center; gap: 6px }
+header, footer, .heading, .note-label { justify-content: space-between }
+h1, h2, p { margin: 0 }
+h1 { font-size: 20px }
+h2 { font-size: 16px }
+button, select { min-height: 36px; padding: 5px 8px; border: 1px solid #879d91; background: white; color: inherit; border-radius: 8px; font: inherit }
+button { cursor: pointer; font-weight: 650 }
+button:disabled { opacity: .55 }
+.primary { background: #145039; color: white; border-color: #145039 }
+#ok, #print { flex: 1; min-height: 44px }
+#pads { min-height: 0; display: grid; gap: 4px 6px; grid-template: minmax(0,1.4fr) repeat(2,minmax(0,1fr)) / repeat(2,minmax(0,1fr)) }
+.pad-field { min-height: 0; min-width: 0; display: grid; grid-template-rows: auto minmax(0,1fr); gap: 2px; font-size: 13px; font-weight: 650 }
+.pad-field:first-child { grid-column: 1/-1 }
+canvas { display: block; width: 100%; height: 100%; min-height: 0; border: 1px solid #879d91; border-radius: 7px; background: white; touch-action: none; cursor: crosshair }
+.note-label select { min-height: 25px; padding: 0 3px; font-size: 12px }
+#cart { min-height: 0; overflow: hidden; border: 1px solid #c8d7ce; border-radius: 9px; background: white; padding: 6px 8px }
+#status { font-size: 13px; color: #3b574b; margin: 3px 0; overflow-wrap: anywhere }
+#cart button { min-height: 27px; padding: 2px 6px; font-size: 13px }
+ul { list-style: none; padding: 0; margin: 0 }
+li { align-items: flex-start; padding: 4px; overflow-wrap: anywhere }
+li div { flex: 1; min-width: 0 }
+li small { display: block }
+.latest { background: #d7f4e1; border-radius: 6px }
+dialog { width: min(94vw,38rem); max-height: 90dvh; border: 1px solid #879d91; border-radius: 10px; color: inherit }
+dialog form, #choices { display: grid; gap: 8px; margin-top: 8px }
+#choices label { display: grid; gap: 3px }
+#sheet { display: none }
+@media print {
+ main, dialog { display: none !important }
+ body { background: white; color: black }
+ #sheet { display: block }
+ #sheet li { break-inside: avoid }
+}
 </style>
 </head>
 <body>
 <main>
-<h1>Manuell bestilling</h1>
-<canvas id="pad" aria-label="Skriv bestillingen med penn eller finger"></canvas>
-<nav aria-label="Håndskrift">
-<button id="undo" type="button">Angre</button>
-<button id="clear" type="button">Tøm feltet</button>
-</nav>
+<header><h1>Manuell bestilling</h1><button id="teach" type="button">Lær skrift</button></header>
+<section id="pads" aria-label="Håndskrift">
+<div class="pad-field"><span id="product-title">Vare · f.eks. k. rull</span><canvas id="product" aria-labelledby="product-title"></canvas></div>
+<div class="pad-field"><span id="quantity-title">Antall · standard 1</span><canvas id="quantity" aria-labelledby="quantity-title"></canvas></div>
+<div class="pad-field"><span id="option-title">Størrelse / saus</span><canvas id="option" aria-labelledby="option-title"></canvas></div>
+<div class="pad-field"><div class="note-label"><span id="note1-title">Merknad 1</span><select id="scope1" aria-label="Antall for merknad 1"></select></div><canvas id="note1" aria-labelledby="note1-title"></canvas></div>
+<div class="pad-field"><div class="note-label"><span id="note2-title">Merknad 2</span><select id="scope2" aria-label="Antall for merknad 2"></select></div><canvas id="note2" aria-labelledby="note2-title"></canvas></div>
+</section>
+<nav aria-label="Handlinger"><button id="undo" type="button">Angre</button><button id="clear" type="button">Tøm felt</button><button id="ok" class="primary" type="button">OK</button></nav>
+<section id="cart">
+<div class="heading"><h2>Bestilling</h2><button id="all" type="button" hidden>Vis alle</button></div>
+<p id="status" role="status">Skriv med penn eller finger.</p>
+<ul id="visible"></ul>
+</section>
+<footer><span id="total">0 stk</span><button id="print" class="primary" type="button" disabled>Skriv ut</button></footer>
 </main>
+<dialog id="review"><h2 id="review-title">Kontroller varelinjen</h2><p id="review-help"></p><div id="choices"></div>
+<form method="dialog"><button id="save" type="button" class="primary"></button><button>Lukk</button></form></dialog>
+<dialog id="basket"><h2>Alle varer</h2><ul id="basket-lines"></ul><form method="dialog"><button>Lukk</button></form></dialog>
+<section id="sheet"><h2>Kjøkkenbestilling</h2><ul id="print-lines"></ul></section>
 <script>
 'use strict';
-const pad = document.getElementById('pad');
-const ctx = pad.getContext('2d');
-const strokes = [];
-let activePointer = null;
+const catalog = {"products": [{"id": "gf_item_17777927", "name": "1. Classico", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17777930", "name": "2. Capri", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17777931", "name": "3. Al Capone", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782816", "name": "4. Parma", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782817", "name": "5. Sjefens favoritt", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782818", "name": "6. Torino", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782819", "name": "7. Mexican Style", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782820", "name": "8. Kebabpizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782821", "name": "9. Kyllingpizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782822", "name": "10. Alfredo", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782823", "name": "11. Calzone (innbakt pizza)", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782824", "name": "12. Ciao Ciao", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782825", "name": "13. Pollo Marina", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782826", "name": "14. Bianca", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_19838139", "name": "15. Fantasia", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_19838148", "name": "16. Diavola", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_18111705", "name": "17. Lag din egen pizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17785864", "name": "Hvitløksdressing", "sizes": ["Standard"]}, {"id": "gf_item_17785865", "name": "Béarnaisesaus", "sizes": ["Standard"]}, {"id": "gf_item_17788540", "name": "Kebab i pita", "sizes": ["Standard"]}, {"id": "gf_item_17788543", "name": "Kyllingkebab i pita", "sizes": ["Standard"]}, {"id": "gf_item_17788668", "name": "Kebabrull", "sizes": ["Standard"]}, {"id": "gf_item_17788669", "name": "Kyllingkebabrull", "sizes": ["Standard"]}, {"id": "gf_item_17788670", "name": "Kebabtallerken", "sizes": ["Standard"]}, {"id": "gf_item_17788673", "name": "Kyllingkebabtallerken", "sizes": ["Standard"]}, {"id": "gf_item_19766893", "name": "Dobbel burger", "sizes": ["200gr + 200gr"]}, {"id": "gf_item_18046629", "name": "Hamburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17783145", "name": "Cheeseburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786621", "name": "BBQ Bacon Cheese Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786623", "name": "BlåmuggostBurger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786627", "name": "Nachosburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786630", "name": "Parmaburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17996124", "name": "Pommes frites", "sizes": ["Standard"]}, {"id": "gf_item_17786657", "name": "Søtpotetfries", "sizes": ["Standard"]}, {"id": "gf_item_17786658", "name": "Mozzarellasticks (5 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17786659", "name": "Løkringer (6 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17787022", "name": "Biffsnadder", "sizes": ["Standard"]}, {"id": "gf_item_24764648", "name": "Kyllingsnadder", "sizes": ["Standard"]}, {"id": "gf_item_19838227", "name": "Hvitløksnadder", "sizes": ["Standard"]}, {"id": "gf_item_19838277", "name": "Fish and chips", "sizes": ["Standard"]}, {"id": "gf_item_19838316", "name": "Løvstek", "sizes": ["Standard"]}, {"id": "gf_item_19838323", "name": "Kyllingsalat", "sizes": ["Standard"]}, {"id": "gf_item_19838325", "name": "Skinkesalat", "sizes": ["Standard"]}, {"id": "gf_item_17820969", "name": "Vegetarburger", "sizes": ["Standard"]}, {"id": "gf_item_17820970", "name": "Vegetarpizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17994559", "name": "Pommes frites", "sizes": ["Standard"]}, {"id": "gf_item_17816461", "name": "Søtpotetfries", "sizes": ["Standard"]}, {"id": "gf_item_17816463", "name": "Mozzarellasticks (5 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17816465", "name": "Løkringer (6 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17820962", "name": "Barneburger", "sizes": ["Standard"]}, {"id": "gf_item_17820963", "name": "Barnepizza", "sizes": ["Standard"]}, {"id": "gf_item_17994561", "name": "Pommes frites", "sizes": ["Standard"]}, {"id": "gf_item_19838407", "name": "Kyllingnuggets (5 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17786784", "name": "Mineralvann 0,5 l", "sizes": ["Standard"]}, {"id": "gf_item_17786787", "name": "Mineralvann 1,5 l", "sizes": ["Standard"]}], "sizes": ["Medium", "Stor", "Standard", "200gr + 200gr"], "extras": ["Biffkjøtt", "Kyllingkjøtt", "Kebabkjøtt", "Bacon", "Skinke", "Pepperoni", "Parmaskinke", "Jalapeño", "Paprika", "Sopp", "Løk", "Mais", "Ekstra ost", "Chips på toppen"], "sauces": ["Hvitløkssaus", "Béarnaisesaus"]};
+const byId = id => document.getElementById(id);
+const status = byId('status');
+const cart = [];
+const history = [];
+const fields = ['product', 'quantity', 'option', 'note1', 'note2'];
+const notes = ['Uten løk', 'Ekstra løk', 'Uten salat', 'Ekstra salat', 'Pommes frites på toppen', ...catalog.extras.map(name => 'Ekstra ' + name)];
+const choices = {
+  product: catalog.products.map(p => [p.id, p.name]),
+  quantity: Array.from({ length: 99 }, (_, i) => [String(i + 1), String(i + 1)]),
+  option: [...catalog.sizes, 'Medium sos', 'Mild saus', 'Sterk saus', ...catalog.sauces].map(name => [name, name]),
+  note: [...new Set(notes)].map(name => [name, name])
+};
+const fieldLabels = {product:'Vare',quantity:'Antall',option:'Størrelse / saus',note1:'Merknad 1',note2:'Merknad 2'};
+const group = key => key.startsWith('note') ? 'note' : key;
+const storageKey = 'bestilling-ink-v2';
+let templates = {};
+let editing = null;
+try { templates = JSON.parse(localStorage.getItem(storageKey) || '{}') || {}; } catch {}
+for (const id of ['scope1','scope2']) {
+  byId(id).append(new Option('Alle', ''), ...choices.quantity.map(([value]) => new Option(value + ' stk', value)));
+}
+const pads = Object.fromEntries(fields.map(id => {
+  const canvas = byId(id);
+  return [id, {canvas, ctx:canvas.getContext('2d'), strokes:[], pointer:null}];
+}));
 
-function draw() {
-  const width = pad.clientWidth;
-  const height = pad.clientHeight;
-  const ratio = window.devicePixelRatio || 1;
-  const pixelWidth = Math.round(width * ratio);
-  const pixelHeight = Math.round(height * ratio);
-  if (pad.width !== pixelWidth || pad.height !== pixelHeight) {
-    pad.width = pixelWidth;
-    pad.height = pixelHeight;
-  }
-  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-  ctx.clearRect(0, 0, width, height);
-  ctx.strokeStyle = ctx.fillStyle = '#2058bc';
+function draw(pad) {
+  const {canvas, ctx, strokes} = pad;
+  const w = canvas.clientWidth, h = canvas.clientHeight, ratio = window.devicePixelRatio || 1;
+  if (canvas.width !== Math.round(w * ratio)) canvas.width = Math.round(w * ratio);
+  if (canvas.height !== Math.round(h * ratio)) canvas.height = Math.round(h * ratio);
+  ctx.setTransform(ratio,0,0,ratio,0,0);
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle = ctx.fillStyle = '#215ebe';
   ctx.lineWidth = 2.5;
-  ctx.lineJoin = ctx.lineCap = 'round';
+  ctx.lineCap = ctx.lineJoin = 'round';
   for (const stroke of strokes) {
-    const [start, ...rest] = stroke;
+    const [first, ...rest] = stroke;
     ctx.beginPath();
     if (!rest.length) {
-      ctx.arc(start.x * width, start.y * height, 1.25, 0, 2 * Math.PI);
+      ctx.arc(first[0]*w,first[1]*h,1.25,0,2*Math.PI);
       ctx.fill();
       continue;
     }
-    ctx.moveTo(start.x * width, start.y * height);
-    for (const point of rest) ctx.lineTo(point.x * width, point.y * height);
+    ctx.moveTo(first[0]*w,first[1]*h);
+    for (const [x,y] of rest) ctx.lineTo(x*w,y*h);
     ctx.stroke();
   }
 }
-
-function point(event) {
-  const rect = pad.getBoundingClientRect();
-  const inside = value => Math.max(0, Math.min(1, value));
-  return { x: inside((event.clientX - rect.left) / rect.width), y: inside((event.clientY - rect.top) / rect.height), t: Math.round(event.timeStamp) };
+for (const pad of Object.values(pads)) {
+  const {canvas, strokes} = pad;
+  const point = event => {
+    const rect = canvas.getBoundingClientRect();
+    const clip = n => Math.max(0,Math.min(1,n));
+    return [clip((event.clientX-rect.left)/rect.width),clip((event.clientY-rect.top)/rect.height)];
+  };
+  canvas.addEventListener('pointerdown', event => {
+    if (pad.pointer !== null || !event.isPrimary || event.button !== 0) return;
+    event.preventDefault();
+    pad.pointer = event.pointerId;
+    canvas.setPointerCapture(event.pointerId);
+    strokes.push([point(event)]);
+    history.push(pad);
+    draw(pad);
+  });
+  canvas.addEventListener('pointermove', event => {
+    if (pad.pointer !== event.pointerId) return;
+    const samples = event.getCoalescedEvents?.();
+    for (const sample of samples?.length ? samples : [event]) strokes.at(-1).push(point(sample));
+    draw(pad);
+  });
+  for (const event of ['pointerup','pointercancel','lostpointercapture']) {
+    canvas.addEventListener(event, pointer => {
+      if (pad.pointer === pointer.pointerId) pad.pointer = null;
+    });
+  }
+  new ResizeObserver(() => draw(pad)).observe(canvas);
 }
 
-pad.addEventListener('pointerdown', event => {
-  if (activePointer !== null || !event.isPrimary || event.button !== 0) return;
-  event.preventDefault();
-  activePointer = event.pointerId;
-  pad.setPointerCapture(event.pointerId);
-  strokes.push([point(event)]);
-  draw();
-});
-pad.addEventListener('pointermove', event => {
-  if (event.pointerId !== activePointer) return;
-  const events = event.getCoalescedEvents?.();
-  for (const sample of events?.length ? events : [event]) strokes.at(-1).push(point(sample));
-  draw();
-});
-for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
-  pad.addEventListener(type, event => {
-    if (event.pointerId !== activePointer) return;
-    activePointer = null;
-    if (type === 'pointercancel') strokes.pop();
-    draw();
+function clearInk() {
+  for (const pad of Object.values(pads)) {
+    pad.pointer = null;
+    pad.strokes.length = 0;
+    draw(pad);
+  }
+  history.length = 0;
+  byId('scope1').value = byId('scope2').value = '';
+}
+byId('undo').onclick = () => {
+  const pad = history.at(-1);
+  if (!pad || pad.pointer !== null) return;
+  history.pop();
+  pad.strokes.pop();
+  draw(pad);
+};
+byId('clear').onclick = () => {
+  editing = null;
+  clearInk();
+  status.textContent = 'Skriv med penn eller finger.';
+};
+
+const GRID = 24;
+function signature(pad) {
+  if (!pad.strokes.length) return null;
+  const w = pad.canvas.clientWidth, h = pad.canvas.clientHeight;
+  let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+  for (const stroke of pad.strokes) for (const [x,y] of stroke) {
+    left = Math.min(left,x*w); top = Math.min(top,y*h);
+    right = Math.max(right,x*w); bottom = Math.max(bottom,y*h);
+  }
+  const span = Math.max(right-left,bottom-top);
+  if (span < 6) return null;
+  const scale = (GRID - 1) / span;
+  const cells = new Set();
+  for (const stroke of pad.strokes) {
+    let previous = null;
+    for (const [x,y] of stroke) {
+      const a = (x*w-left)*scale, b = (y*h-top)*scale;
+      const [px,py] = previous || [a,b];
+      const steps = Math.max(1,Math.ceil(Math.hypot(a-px,b-py)));
+      for (let i=0; i<=steps; i++) cells.add(Math.round(px+(a-px)*i/steps)+GRID*Math.round(py+(b-py)*i/steps));
+      previous = [a,b];
+    }
+  }
+  return [...cells];
+}
+
+function distanceMap(cells) {
+  return Array.from({length:GRID*GRID}, (_, cell) => {
+    let nearest = Infinity;
+    for (const other of cells) {
+      const dx = cell%GRID-other%GRID;
+      const dy = Math.floor(cell/GRID)-Math.floor(other/GRID);
+      nearest = Math.min(nearest, dx*dx+dy*dy);
+      if (nearest === 0) break;
+    }
+    return Math.sqrt(nearest);
   });
 }
-new ResizeObserver(draw).observe(pad);
-function clearInk() { strokes.length = 0; activePointer = null; draw(); }
 
+function recognize(key, ink) {
+  if (!ink) return '';
+  const map = distanceMap(ink);
+  const mean = (cells, distance) => cells.reduce((sum, cell) => sum + distance[cell],0)/cells.length;
+  const scores = [];
+  for (const [value] of choices[group(key)]) {
+    const examples = templates[group(key)]?.[value];
+    if (!examples?.length) continue;
+    const score = Math.min(...examples.map(sample => {
+      const cells = sample.cells;
+      const reverse = ink.reduce((sum, cell) => sum + sample.map[cell],0)/ink.length;
+      return (mean(cells,map)+reverse)/2;
+    }));
+    scores.push({value, score});
+  }
+  scores.sort((a,b) => a.score-b.score);
+  const [first, second] = scores;
+  if (!first || first.score > 1.8 || (second && second.score-first.score < .45)) return '';
+  if (group(key) === 'note' && ['Uten løk', 'Ekstra løk'].includes(first.value)) {
+    const other = first.value === 'Uten løk' ? 'Ekstra løk' : 'Uten løk';
+    if (!templates.note?.[other]?.length) return '';
+  }
+  return first.value;
+}
 
-document.getElementById('undo').onclick = () => {
-  if (activePointer !== null) return;
-  strokes.pop();
-  draw();
-};
-document.getElementById('clear').onclick = clearInk;
+function remember(key,value,cells) {
+  const bucket = templates[group(key)] ??= {};
+  bucket[value] = [...(bucket[value] || []), {cells,map:distanceMap(cells)}].slice(-5);
+}
+function persist() {
+  try {
+    const saved = Object.fromEntries(Object.entries(templates).map(([key,bucket]) =>
+      [key,Object.fromEntries(Object.entries(bucket).map(([value,records]) => [value,records.map(record => record.cells)]))]));
+    localStorage.setItem(storageKey, JSON.stringify(saved));
+    return true;
+  } catch { return false; }
+}
+const saved = templates;
+templates = {};
+for (const [key,bucket] of Object.entries(saved)) {
+  if (!choices[key] || !bucket || typeof bucket !== 'object') continue;
+  for (const [value] of choices[key]) {
+    if (!Array.isArray(bucket[value])) continue;
+    for (const cells of bucket[value].slice(-5)) {
+      if (Array.isArray(cells) && cells.length && cells.every(cell => Number.isInteger(cell) && cell >= 0 && cell < GRID*GRID)) remember(key,value,cells);
+    }
+  }
+}
+
+function addLine(values) {
+  const product = catalog.products.find(p => p.id === values.product);
+  const quantity = Number(values.quantity || 1);
+  const option = values.option || '';
+  const size = catalog.sizes.includes(option);
+  if (!product || !Number.isInteger(quantity) || quantity < 1 || quantity > 99) return 'Velg en vare og et gyldig antall.';
+  if (size && !product.sizes.includes(option)) return 'Størrelsen finnes ikke for denne varen.';
+  const name = size ? option + ' ' + product.name.replace(/^\d+\.\s*/u, '') : product.name;
+  const row = {name, quantity, notes:[]};
+  if (option && !size) row.notes.push(option);
+  const rules = new Map();
+  for (const [key,id] of [['note1','scope1'],['note2','scope2']]) {
+    const note = values[key];
+    const count = Number(byId(id).value || quantity);
+    if (!note && byId(id).value) return 'Velg en merknad for antallet.';
+    if (!note) continue;
+    if (count > quantity) return 'Antall for merknaden er større enn antall varer.';
+    const ingredient = note.match(/^(?:Uten|Ekstra) (.+)$/);
+    if (ingredient) {
+      const already = rules.get(ingredient[1]);
+      if (already && (already.note === note || already.count + count > quantity)) return 'Kontroller merknadene for ' + ingredient[1] + '.';
+      rules.set(ingredient[1], {note,count});
+    }
+    row.notes.push((count < quantity ? count + ' ' : '') + note);
+  }
+  if (editing) cart.splice(cart.indexOf(editing),1);
+  cart.push(row);
+  editing = null;
+  clearInk();
+  status.textContent = 'Lagt til: ' + row.name;
+  render();
+  return '';
+}
+
+function review(teaching) {
+  if (Object.values(pads).some(pad => pad.pointer !== null)) return;
+  const ink = Object.fromEntries(fields.map(key => [key,signature(pads[key])]));
+  const written = fields.filter(key => pads[key].strokes.length);
+  if (!written.length && teaching) {
+    status.textContent = 'Skriv i feltet du vil lære opp først.';
+    return;
+  }
+  const values = Object.fromEntries(fields.map(key => [key,recognize(key,ink[key])]));
+  if (!teaching && values.product && written.every(key => values[key])) {
+    const error = addLine(values);
+    if (!error) return;
+    status.textContent = error;
+  }
+  const dialog = byId('review');
+  byId('review-title').textContent = teaching ? 'Lær håndskriften din' : 'Kontroller varelinjen';
+  byId('review-help').textContent = teaching
+    ? 'Velg hva du skrev. Eksemplene lagres på denne telefonen.'
+    : 'Velg riktig verdi for feltene som er usikre.';
+  const selects = {};
+  const shown = teaching ? written : fields;
+  byId('choices').replaceChildren(...shown.map(key => {
+    const label = document.createElement('label');
+    label.textContent = fieldLabels[key];
+    const select = document.createElement('select');
+    select.append(new Option(key === 'quantity' ? 'Standard 1' : 'Velg', ''), ...choices[group(key)].map(([value,name]) => new Option(name,value)));
+    select.value = values[key];
+    selects[key] = select;
+    label.append(select);
+    return label;
+  }));
+  const save = byId('save');
+  save.textContent = teaching ? 'Lagre eksempler' : 'Legg til';
+  save.onclick = () => {
+    for (const key of shown) values[key] = selects[key].value;
+    if (teaching) {
+      const examples = written.filter(key => values[key] && ink[key]);
+      if (!examples.length) {
+        byId('review-help').textContent = 'Skriv en forkortelse eller et tall og velg betydningen.';
+        return;
+      }
+      for (const key of examples) remember(key,values[key],ink[key]);
+      status.textContent = persist() ? 'Eksempler lagret. Skriv på nytt for å teste.' : 'Eksempler lagret for denne økten.';
+      clearInk();
+    } else {
+      if (written.some(key => !values[key])) {
+        byId('review-help').textContent = 'Velg en verdi for hvert felt du skrev i, eller lukk og visk ut feltet.';
+        return;
+      }
+      const error = addLine(values);
+      if (error) { byId('review-help').textContent = error; return; }
+    }
+    dialog.close();
+  };
+  dialog.showModal();
+}
+byId('teach').onclick = () => review(true);
+byId('ok').onclick = () => review(false);
+
+function item(row, mode) {
+  const li = document.createElement('li');
+  const text = document.createElement('div');
+  const title = document.createElement('strong');
+  title.textContent = row.quantity + '× ' + row.name;
+  text.append(title);
+  if (row.notes.length) {
+    const note = document.createElement('small');
+    note.textContent = row.notes.join(' · ');
+    text.append(note);
+  }
+  li.append(text);
+  if (mode === 'preview') li.className = 'latest';
+  if (mode) {
+    const edit = document.createElement('button');
+    edit.textContent = 'Endre';
+    edit.onclick = () => {
+      if (byId('basket').open) byId('basket').close();
+      clearInk();
+      editing = row;
+      status.textContent = 'Skriv hele varelinjen på nytt.';
+    };
+    li.append(edit);
+  }
+  if (mode === 'all') {
+    const remove = document.createElement('button');
+    remove.textContent = 'Fjern';
+    remove.onclick = () => {
+      cart.splice(cart.indexOf(row),1);
+      if (editing === row) editing = null;
+      render();
+    };
+    li.append(remove);
+  }
+  return li;
+}
+function render() {
+  const reversed = [...cart].reverse();
+  byId('visible').replaceChildren(...reversed.slice(0,1).map(row => item(row,'preview')));
+  byId('basket-lines').replaceChildren(...reversed.map(row => item(row,'all')));
+  byId('print-lines').replaceChildren(...cart.map(row => item(row,'')));
+  byId('all').hidden = !cart.length;
+  byId('all').textContent = 'Vis alle (' + cart.length + ')';
+  byId('total').textContent = cart.reduce((sum,row) => sum + row.quantity,0) + ' stk';
+  byId('print').disabled = !cart.length;
+}
+byId('all').onclick = () => byId('basket').showModal();
+byId('print').onclick = () => window.print();
+render();
 </script>
 </body>
 </html>
