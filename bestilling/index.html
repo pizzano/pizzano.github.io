@@ -20,10 +20,8 @@ button:disabled{opacity:.5;cursor:default}
 button:focus-visible{outline:2px solid #bf8b3b;outline-offset:2px}
 .primary{flex:1;color:white;background:var(--green);border-color:var(--green);font-size:18px}
 .notebook{position:relative;min-height:0;overflow:hidden;background:var(--dark)}
-#ink,textarea{display:block;width:100%;height:100%;background:repeating-linear-gradient(to bottom,var(--dark) 0 33px,#2b493e 33px 34px)}
+#ink{display:block;width:100%;height:100%;background:repeating-linear-gradient(to bottom,var(--dark) 0 33px,#2b493e 33px 34px)}
 #ink{touch-action:none;cursor:crosshair;background-position:0 var(--ink-offset,0px)}
-textarea{resize:none;border:0;padding:12px 12px 64px;color:#f4faf6;caret-color:#9de2bc;font:20px/34px system-ui,sans-serif;background-origin:content-box;background-attachment:local}
-textarea::placeholder{color:#b2c9bd}
 .tools{position:absolute;bottom:8px;left:8px;display:flex;gap:6px}
 .tools button,#next-line{display:grid;place-items:center;width:44px;padding:0;color:#f4faf6;background:#214638;border-color:#3c6151}
 #next-line{position:absolute;bottom:8px;right:8px;color:var(--dark);background:#d9eddf}
@@ -63,43 +61,32 @@ dialog::backdrop{background:#102a2380}
 <main>
 <div class="notebook">
 <canvas id="ink" aria-label="Skriv med penn, finger eller mus"></canvas>
-<textarea id="order" aria-label="Skriv bestillingen" hidden inputmode="none" autocomplete="off" spellcheck="false" placeholder="Skriv med S Pen"></textarea>
 <div class="tools"><button id="undo" type="button" aria-label="Angre siste strek" title="Angre siste strek"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5m-5-5h11a4 4 0 0 1 4 4v2"/></svg></button></div>
 <button id="next-line" type="button" aria-label="Bla opp og fortsett å skrive" title="Bla opp og fortsett å skrive"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V4m-6 6 6-6 6 6"/></svg></button>
 </div>
 <section id="cart" aria-label="Bestilling" hidden>
 <button id="all" type="button" hidden>Vis alle</button>
-<p id="suggestion" aria-live="polite" hidden></p>
 <p id="status" role="status" hidden></p>
 <div id="corrections" aria-label="Mulige varer" hidden></div>
 <ul id="latest"></ul>
 </section>
 <footer aria-label="Bestillingshandlinger">
-<button id="menu" class="tool-icon" type="button" aria-label="Meny" title="Meny"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg></button>
 <button id="clear" class="tool-icon" type="button" aria-label="Tøm felt" title="Tøm felt"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg></button>
 <button id="ok" class="primary" type="button">OK</button>
 <span id="total" hidden></span><button id="print" class="print-icon" type="button" aria-label="Skriv ut bestillingen" title="Skriv ut bestillingen" disabled><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6zM17 12h1"/></svg></button></footer>
 </main>
-<dialog id="menu-dialog">
-<div class="sheet-top"><h2>Meny</h2><form method="dialog"><button aria-label="Lukk menyen">×</button></form></div>
-<div id="quick" class="quick" aria-label="Hurtigvalg"></div>
-<button id="mode" type="button" style="margin-top:8px">S Pen-tekst</button>
-<div id="menu-list"></div>
-</dialog>
 <dialog id="basket"><div class="sheet-top"><h2>Alle varer</h2><form method="dialog"><button aria-label="Lukk bestillingen">×</button></form></div><ul id="basket-lines"></ul></dialog>
 <section id="sheet"><h2>Kjøkkenbestilling</h2><ul id="print-lines"></ul></section>
 <script>
 'use strict';
 const catalog = {"products": [{"id": "gf_item_17777927", "name": "1. Classico", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17777930", "name": "2. Capri", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17777931", "name": "3. Al Capone", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782816", "name": "4. Parma", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782817", "name": "5. Sjefens favoritt", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782818", "name": "6. Torino", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782819", "name": "7. Mexican Style", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782820", "name": "8. Kebabpizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782821", "name": "9. Kyllingpizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782822", "name": "10. Alfredo", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782823", "name": "11. Calzone (innbakt pizza)", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782824", "name": "12. Ciao Ciao", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782825", "name": "13. Pollo Marina", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17782826", "name": "14. Bianca", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_19838139", "name": "15. Fantasia", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_19838148", "name": "16. Diavola", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_18111705", "name": "17. Lag din egen pizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17785864", "name": "Hvitløksdressing", "sizes": ["Standard"]}, {"id": "gf_item_17785865", "name": "Béarnaisesaus", "sizes": ["Standard"]}, {"id": "gf_item_17788540", "name": "Kebab i pita", "sizes": ["Standard"]}, {"id": "gf_item_17788543", "name": "Kyllingkebab i pita", "sizes": ["Standard"]}, {"id": "gf_item_17788668", "name": "Kebabrull", "sizes": ["Standard"]}, {"id": "gf_item_17788669", "name": "Kyllingkebabrull", "sizes": ["Standard"]}, {"id": "gf_item_17788670", "name": "Kebabtallerken", "sizes": ["Standard"]}, {"id": "gf_item_17788673", "name": "Kyllingkebabtallerken", "sizes": ["Standard"]}, {"id": "gf_item_19766893", "name": "Dobbel burger", "sizes": ["200gr + 200gr"]}, {"id": "gf_item_18046629", "name": "Hamburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17783145", "name": "Cheeseburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786621", "name": "BBQ Bacon Cheese Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786623", "name": "BlåmuggostBurger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786627", "name": "Nachosburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17786630", "name": "Parmaburger Tallerken", "sizes": ["Standard"]}, {"id": "gf_item_17996124", "name": "Pommes frites", "sizes": ["Standard"]}, {"id": "gf_item_17786657", "name": "Søtpotetfries", "sizes": ["Standard"]}, {"id": "gf_item_17786658", "name": "Mozzarellasticks (5 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17786659", "name": "Løkringer (6 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17787022", "name": "Biffsnadder", "sizes": ["Standard"]}, {"id": "gf_item_24764648", "name": "Kyllingsnadder", "sizes": ["Standard"]}, {"id": "gf_item_19838227", "name": "Hvitløksnadder", "sizes": ["Standard"]}, {"id": "gf_item_19838277", "name": "Fish and chips", "sizes": ["Standard"]}, {"id": "gf_item_19838316", "name": "Løvstek", "sizes": ["Standard"]}, {"id": "gf_item_19838323", "name": "Kyllingsalat", "sizes": ["Standard"]}, {"id": "gf_item_19838325", "name": "Skinkesalat", "sizes": ["Standard"]}, {"id": "gf_item_17820969", "name": "Vegetarburger", "sizes": ["Standard"]}, {"id": "gf_item_17820970", "name": "Vegetarpizza", "sizes": ["Medium", "Stor"]}, {"id": "gf_item_17994559", "name": "Pommes frites", "sizes": ["Standard"]}, {"id": "gf_item_17816461", "name": "Søtpotetfries", "sizes": ["Standard"]}, {"id": "gf_item_17816463", "name": "Mozzarellasticks (5 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17816465", "name": "Løkringer (6 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17820962", "name": "Barneburger", "sizes": ["Standard"]}, {"id": "gf_item_17820963", "name": "Barnepizza", "sizes": ["Standard"]}, {"id": "gf_item_17994561", "name": "Pommes frites", "sizes": ["Standard"]}, {"id": "gf_item_19838407", "name": "Kyllingnuggets (5 stk.)", "sizes": ["Standard"]}, {"id": "gf_item_17786784", "name": "Mineralvann 0,5 l", "sizes": ["Standard"]}, {"id": "gf_item_17786787", "name": "Mineralvann 1,5 l", "sizes": ["Standard"]}], "sizes": ["Medium", "Stor", "Standard", "200gr + 200gr"], "extras": ["Biffkjøtt", "Kyllingkjøtt", "Kebabkjøtt", "Bacon", "Skinke", "Pepperoni", "Parmaskinke", "Jalapeño", "Paprika", "Sopp", "Løk", "Mais", "Ekstra ost", "Chips på toppen"], "sauces": ["Hvitløkssaus", "Béarnaisesaus"]};
 const byId = id => document.getElementById(id);
-const order = byId('order');
 const cart = [];
 const ink = byId('ink');
 const pen = ink.getContext('2d');
 let strokes = [];
 let pageTop = 0;
 let pointer = null;
-let textMode = false;
 
 function trace(context, paths, xScale, yOffset) {
   for (const path of paths) {
@@ -141,6 +128,7 @@ ink.addEventListener('pointerdown',event => {
   event.preventDefault();
   pointer = event.pointerId;
   ink.setPointerCapture(pointer);
+  clearTranscript();
   strokes.push([point(event)]);
   redraw();
 });
@@ -153,72 +141,13 @@ ink.addEventListener('pointermove',event => {
 for (const type of ['pointerup','pointercancel','lostpointercapture']) {
   ink.addEventListener(type,event => { if (event.pointerId === pointer) pointer = null; });
 }
-function openMode(enabled) {
-  textMode = enabled;
-  ink.hidden = enabled;
-  order.hidden = !enabled;
-  byId('mode').textContent = enabled ? 'Frihånd' : 'S Pen-tekst';
-  byId('undo').hidden = enabled;
-  if (enabled) order.focus({preventScroll:true});
-  else redraw();
-  displaySuggestion();
-  renderQuick();
-}
-byId('mode').onclick = () => {
-  byId('menu-dialog').close();
-  openMode(!textMode);
-};
 byId('undo').onclick = () => {
   if (pointer !== null || !strokes.length) return;
+  clearTranscript();
   strokes.pop();
   if (!strokes.length) pageTop = 0;
   redraw();
 };
-byId('menu').onclick = () => byId('menu-dialog').showModal();
-for (const product of catalog.products) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.textContent = product.name;
-  button.onclick = () => {
-    byId('menu-dialog').close();
-    selectProduct(product.name);
-  };
-  byId('menu-list').append(button);
-}
-function selectProduct(name) {
-  const previous = order.value.trimEnd();
-  order.value = previous && !editing ? previous + '\n' + name : name;
-  openMode(true);
-  order.setSelectionRange(order.value.length,order.value.length);
-  order.scrollTop = order.scrollHeight;
-}
-function renderQuick() {
-  const products = [['Kebabrull','Kebabrull'],['Kebabpizza','Kebabpizza'],['Blue','blue'],['Kebabtall.','Kebabtallerken']];
-  const modifiers = [['− løk','-løk'],['+ løk','+løk'],['− salat','-salat'],['+ chips','+chips']];
-  const entries = textMode ? modifiers : products;
-  byId('quick').replaceChildren(...entries.map(([label,value]) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.textContent = label;
-    button.onclick = () => {
-      if (!textMode) {
-        byId('menu-dialog').close();
-        selectProduct(value);
-        return;
-      }
-      const lines = order.value.trimEnd().split('\n');
-      const last = lines.at(-1);
-      if (!last || !parseLine(last)) { showStatus('Velg eller skriv en vare først.'); return; }
-      const updated = last + ', ' + value;
-      if (!parseLine(updated)) { showStatus('Kontroller merknadene på varelinjen.'); return; }
-      lines[lines.length-1] = updated;
-      order.value = lines.join('\n');
-      byId('menu-dialog').close();
-      displaySuggestion();
-    };
-    return button;
-  }));
-}
 function inkImage(paths) {
   const width = Math.max(ink.clientWidth,320);
   let left = width, right = 0, top = Infinity, bottom = 0;
@@ -237,7 +166,6 @@ function inkImage(paths) {
   return canvas.toDataURL();
 }
 let editing = null;
-let composing = false;
 const normalize = value => value.normalize('NFKC').trim().toLocaleLowerCase('nb').replace(/\s+/g,' ');
 const nameOf = product => product.name.replace(/^\d+\.\s*/u,'');
 const aliases = {
@@ -629,11 +557,9 @@ function renderCorrections(source,index) {
     button.type = 'button';
     button.textContent = row.name;
     button.onclick = () => {
-      const lines = order.value.split(/\r?\n/u);
-      if (lines[index]?.trim()!==source) return;
-      lines[index]=replacement;
-      order.value=lines.join('\n');
-      displaySuggestion();
+      if (transcript[index]!==source) return;
+      transcript[index]=replacement;
+      submitTranscript();
     };
     return button;
   }));
@@ -641,19 +567,7 @@ function renderCorrections(source,index) {
 }
 
 function updateCartVisibility() {
-  byId('cart').hidden = !cart.length && byId('suggestion').hidden && byId('status').hidden && byId('corrections').hidden;
-}
-function displaySuggestion() {
-  const lines = textMode && !composing ? order.value.split(/\r?\n/u) : [];
-  const index = lines.findLastIndex(line=>line.trim());
-  const source = lines[index]?.trim() || '';
-  const candidate = source ? parseLine(source) : null;
-  renderCorrections(candidate ? '' : source,index);
-  const suggestion = byId('suggestion');
-  suggestion.hidden = !candidate;
-  suggestion.textContent = candidate ? 'Forslag: ' + candidate.quantity + '× ' + candidate.name + (candidate.notes.length ? ' · ' + candidate.notes.join(' · ') : '') : '';
-  byId('status').hidden = true;
-  updateCartVisibility();
+  byId('cart').hidden = !cart.length && byId('status').hidden && byId('corrections').hidden;
 }
 function showStatus(message) {
   const status = byId('status');
@@ -661,39 +575,26 @@ function showStatus(message) {
   status.hidden = !message;
   updateCartVisibility();
 }
-order.addEventListener('compositionstart', () => { composing = true; });
-order.addEventListener('compositionend', () => { composing = false; displaySuggestion(); });
-order.addEventListener('input', displaySuggestion);
-const nextLine = byId('next-line');
-nextLine.onclick = () => {
-  if (!textMode) {
-    if (pointer !== null || !strokes.length) return;
-    const bottom = strokes.reduce((max,path) => path.reduce((end,p) => Math.max(end,p.y),max),pageTop);
-    pageTop = Math.max(pageTop,Math.floor((bottom-44)/34)*34);
-    redraw();
-    return;
-  }
-  if (composing) { showStatus('Vent til håndskriften er lest.'); return; }
-  const text = order.value.trimEnd();
-  const start = text ? text.length + 1 : 0;
-  const extraLines = Math.max(1, Math.floor((order.clientHeight - 100) / 34));
-  order.value = text ? text + '\n'.repeat(extraLines + 1) : '';
-  order.focus({preventScroll:true});
-  order.setSelectionRange(start, start);
-  order.scrollTop = order.scrollHeight;
-  displaySuggestion();
+let transcript = [];
+byId('next-line').onclick = () => {
+  if (pointer !== null || !strokes.length) return;
+  const bottom = strokes.reduce((max,path) => path.reduce((end,p) => Math.max(end,p.y),max),pageTop);
+  pageTop = Math.max(pageTop,Math.floor((bottom-44)/34)*34);
+  redraw();
 };
-
+function clearTranscript() {
+  transcript = [];
+  renderCorrections('',0);
+  showStatus('');
+}
 function resetEditor() {
   editing = null;
-  order.value = '';
+  clearTranscript();
   strokes = [];
   pageTop = 0;
   pointer = null;
   redraw();
-  order.scrollTop = 0;
   byId('ok').textContent = 'OK';
-  displaySuggestion();
 }
 byId('clear').onclick = resetEditor;
 function inkSignature(paths, width, height) {
@@ -811,21 +712,10 @@ async function readInk(paths) {
     });
     if (!response.ok) throw Error('Recognition failed');
     const {text} = await response.json();
-    if (strokes !== paths || textMode || inkImage(paths) !== image) return;
+    if (strokes !== paths || inkImage(paths) !== image) return;
     if (typeof text !== 'string' || !text.trim()) { showStatus('Kunne ikke lese håndskriften.'); return; }
-    const lines = text.trim().split(/\r?\n/u).filter(line=>line.trim());
-    const rows = lines.map(line => line.includes('?') ? null : parseLine(line));
-    if (rows.some(row=>!row) || (editing && rows.length!==1)) {
-      order.value = text;
-      openMode(true);
-      showStatus('Kontroller den leste teksten før du legger til.');
-      return;
-    }
-    if (editing) cart.splice(cart.indexOf(editing),1,rows[0]);
-    else cart.push(...rows);
-    latest = rows.at(-1);
-    resetEditor();
-    render();
+    transcript = text.trim().split(/\r?\n/u).map(line=>line.trim()).filter(Boolean);
+    submitTranscript();
   } catch {
     if (strokes === paths) showStatus('Kunne ikke lese nå. Håndskriften er beholdt.');
   } finally {
@@ -835,41 +725,35 @@ async function readInk(paths) {
   }
 }
 
-byId('ok').onclick = () => {
-  if (readingInk) return;
-  if (!textMode) {
-    if (pointer !== null || !strokes.length) { showStatus('Skriv bestillingen først.'); return; }
-    if (recognition) { void readInk(strokes); return; }
-    const row = recognizeSavedProduct(strokes);
-    if (!row) { showStatus('Ukjent vare. Håndskriften er beholdt.'); return; }
-    if (editing) cart.splice(cart.indexOf(editing),1,row);
-    else cart.push(row);
-    latest = row;
-    resetEditor();
-    render();
-    return;
-  }
-  if (composing) { showStatus('Vent til håndskriften er lest.'); return; }
-  const entries = order.value.split(/\r?\n/u).map((line,index)=>({line:line.trim(),index})).filter(entry=>entry.line);
-  const lines = entries.map(entry=>entry.line);
-  if (!lines.length) { showStatus('Skriv bestillingen med S Pen først.'); return; }
-  if (editing && lines.length !== 1) { showStatus('Skriv én varelinje når du redigerer.'); return; }
-  const rows = lines.map(parseLine);
-  const unknown = rows.indexOf(null);
-  if (unknown >= 0) {
-    renderCorrections(lines[unknown],entries[unknown].index);
-    showStatus('Kontroller linje ' + (entries[unknown].index+1) + ': ' + lines[unknown]);
-    return;
-  }
-  if (strokes.length) {
-    rows[0].ink = strokes;
-    rows[0].image = inkImage(strokes);
-  }
+function saveRows(rows) {
   if (editing) cart.splice(cart.indexOf(editing),1,rows[0]);
   else cart.push(...rows);
   latest = rows.at(-1);
   resetEditor();
   render();
+}
+function submitTranscript() {
+  if (editing && transcript.length!==1) {
+    showStatus('Skriv én varelinje når du redigerer.');
+    return;
+  }
+  const rows = transcript.map(line=>line.includes('?') ? null : parseLine(line));
+  const unknown = rows.indexOf(null);
+  if (unknown>=0) {
+    renderCorrections(transcript[unknown],unknown);
+    showStatus('Kontroller linje '+(unknown+1)+': '+transcript[unknown]);
+    return;
+  }
+  saveRows(rows);
+}
+byId('ok').onclick = () => {
+  if (readingInk || pointer !== null) return;
+  if (!strokes.length) { showStatus('Skriv bestillingen først.'); return; }
+  if (transcript.length) { submitTranscript(); return; }
+  if (recognition) { void readInk(strokes); return; }
+  const row = recognizeSavedProduct(strokes);
+  if (!row) { showStatus('Ukjent vare. Håndskriften er beholdt.'); return; }
+  saveRows([row]);
 };
 
 let latest = null;
@@ -897,12 +781,12 @@ function makeItem(row, actionable) {
     ['✎','Endre','',() => {
       if (byId('basket').open) byId('basket').close();
       editing = row;
-      order.value = row.source || '';
+      clearTranscript();
       strokes = row.ink ? row.ink.map(path => [...path]) : [];
       pageTop = 0;
-      order.scrollTop = 0;
       byId('ok').textContent = 'Lagre';
-      openMode(Boolean(row.source));
+      redraw();
+      showStatus('Skriv varelinjen på nytt med pennen.');
     }],
     ['×','Fjern','remove',() => {
       cart.splice(cart.indexOf(row),1);
@@ -935,7 +819,6 @@ function render() {
 }
 byId('all').onclick = () => byId('basket').showModal();
 byId('print').onclick = () => window.print();
-renderQuick();
 render();
 </script>
 </body>
