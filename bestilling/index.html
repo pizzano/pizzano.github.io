@@ -596,7 +596,7 @@ function similarOrders(source) {
     return exact.map(({product,tail}) => {
       const replacement = [prefix+product.name,tail].filter(Boolean).join(' ');
       return {row:parseLine(replacement),replacement};
-    }).filter(item=>item.row).slice(0,4);
+    }).filter(item=>item.row);
   }
   for (const word of remainder.matchAll(/[\p{L}]+(?=\s|[,;.+−-]|$)/gu)) {
     const end = word.index+word[0].length;
