@@ -513,7 +513,9 @@ function matchProduct(text) {
 }
 
 function parseLine(source) {
-  let text = normalize(source);
+  let text = normalize(source)
+    .replace(/^((?:\d{1,2}\s*[x×]\s*)?)m\.?\s*(?=\d{1,2}(?!\d)(?:$|[\s,+−-]|[x×]\s*\d))/u,'$1medium ')
+    .replace(/^((?:\d{1,2}\s*[x×]\s*)?\d{1,2})\s*m\.?(?=$|[\s,+−-]|[x×]\s*\d)/u,'$1 medium');
   const firstCount = text.match(/^(\d{1,2})\s*[x×]\s*/u);
   if (firstCount) text = text.slice(firstCount[0].length);
   const firstSize = text.match(/^(st\.?|stor|medium)\s+/u);
