@@ -29,6 +29,8 @@ textarea::placeholder{color:#b2c9bd}
 #next-line{position:absolute;bottom:8px;right:8px;color:var(--dark);background:#d9eddf}
 .icon-svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
 #cart{display:flex;flex-direction:column;gap:3px;min-height:0;max-height:26dvh;padding:4px 6px;background:var(--paper);overflow:auto;scrollbar-width:thin}
+#corrections{display:flex;gap:4px;flex-wrap:wrap}
+#corrections button{font-size:13px;min-height:38px;padding:4px 8px}
 #suggestion,#status{font-size:13px;overflow-wrap:anywhere}
 #suggestion{color:var(--muted)}
 #status{color:#8a411e}
@@ -69,6 +71,7 @@ dialog::backdrop{background:#102a2380}
 <button id="all" type="button" hidden>Vis alle</button>
 <p id="suggestion" aria-live="polite" hidden></p>
 <p id="status" role="status" hidden></p>
+<div id="corrections" aria-label="Mulige varer" hidden></div>
 <ul id="latest"></ul>
 </section>
 <footer aria-label="Bestillingshandlinger">
@@ -448,13 +451,15 @@ const aliases = {
 };
 const fold = text => normalize(text).normalize('NFD').replace(/\p{Mark}/gu,'').replace(/ø/g,'o').replace(/æ/g,'ae');
 const escapePattern = text => text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const compactName = value => fold(value).replace(/[^a-z0-9]/g,'');
 const rules = catalog.products.flatMap(product => {
   const name = nameOf(product);
   const keys = new Set([product.name,name,...(aliases[name] || [])]);
   const number = product.name.match(/^(\d+)\./)?.[1];
-  if (number) keys.add('nr '+number).add('pizza '+number);
+  if (number) keys.add(number).add('nr '+number).add('pizza '+number);
   return [...keys].map(key => ({
     product,
+    spelling: compactName(key),
     pattern: new RegExp('^'+fold(key).split(' ').map(escapePattern).join('[ .-]+')+'(?=$|[\\s,;+−-]|[x×]\\s*\\d)','u')
   }));
 });
@@ -530,12 +535,80 @@ function parseLine(source) {
   return { source, quantity, name: [menuSize,nameOf(product)].filter(Boolean).join(' '), notes };
 }
 
+function spellingDistance(a,b) {
+  let previous = Array.from({length:b.length+1},(_,i)=>i);
+  let earlier;
+  for (let i=1;i<=a.length;i++) {
+    const current = [i];
+    for (let j=1;j<=b.length;j++) {
+      current[j] = Math.min(previous[j]+1,current[j-1]+1,previous[j-1]+Number(a[i-1]!==b[j-1]));
+      if (i>1 && j>1 && a[i-1]===b[j-2] && a[i-2]===b[j-1]) {
+        current[j] = Math.min(current[j], earlier[j-2]+1);
+      }
+    }
+    earlier=previous;
+    previous=current;
+  }
+  return previous[b.length];
+}
+
+function similarOrders(source) {
+  const text = source.trim();
+  if (!text || text.length>120) return [];
+  const prefix = text.match(/^(?:(?:\d{1,2}\s*[x×]\s*)?(?:stor|medium)\s+|\d{1,2}\s*[x×]\s*)/iu)?.[0] || '';
+  const remainder = text.slice(prefix.length);
+  const candidates = new Map();
+  for (const word of remainder.matchAll(/[\p{L}]+(?=\s|[,;.+−-]|$)/gu)) {
+    const end = word.index+word[0].length;
+    const head = remainder.slice(0,end);
+    if (!/^[\p{L} .-]+$/u.test(head)) break;
+    const key = compactName(head);
+    if (key.length<4 || key.length>24) continue;
+    const maximum = key.length>=8 ? 2 : 1;
+    for (const {product,spelling} of rules) {
+      if (!/^[a-z]+$/.test(spelling) || Math.abs(spelling.length-key.length)>maximum) continue;
+      const distance = spellingDistance(key,spelling);
+      if (distance>maximum) continue;
+      const replacement = prefix+product.name+remainder.slice(end);
+      const row = parseLine(replacement);
+      if (!row) continue;
+      const score = distance / Math.max(key.length,spelling.length);
+      const label = row.name;
+      const other = candidates.get(label);
+      if (!other || score<other.score) candidates.set(label,{row,replacement,score});
+    }
+  }
+  return [...candidates.values()].sort((a,b)=>a.score-b.score).slice(0,2);
+}
+
+function renderCorrections(source,index) {
+  const area = byId('corrections');
+  const options = source ? similarOrders(source) : [];
+  area.replaceChildren(...options.map(({row,replacement}) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = row.name;
+    button.onclick = () => {
+      const lines = order.value.split(/\r?\n/u);
+      if (lines[index]?.trim()!==source) return;
+      lines[index]=replacement;
+      order.value=lines.join('\n');
+      displaySuggestion();
+    };
+    return button;
+  }));
+  area.hidden = !options.length;
+}
+
 function updateCartVisibility() {
-  byId('cart').hidden = !cart.length && byId('suggestion').hidden && byId('status').hidden;
+  byId('cart').hidden = !cart.length && byId('suggestion').hidden && byId('status').hidden && byId('corrections').hidden;
 }
 function displaySuggestion() {
-  const text = textMode ? order.value.trim() : '';
-  const candidate = text ? parseLine(text.split(/\r?\n/u).at(-1)) : null;
+  const lines = textMode && !composing ? order.value.split(/\r?\n/u) : [];
+  const index = lines.findLastIndex(line=>line.trim());
+  const source = lines[index]?.trim() || '';
+  const candidate = source ? parseLine(source) : null;
+  renderCorrections(candidate ? '' : source,index);
   const suggestion = byId('suggestion');
   suggestion.hidden = !candidate;
   suggestion.textContent = candidate ? 'Forslag: ' + candidate.quantity + '× ' + candidate.name + (candidate.notes.length ? ' · ' + candidate.notes.join(' · ') : '') : '';
@@ -678,12 +751,17 @@ byId('ok').onclick = () => {
     return;
   }
   if (composing) { showStatus('Vent til håndskriften er lest.'); return; }
-  const lines = order.value.split(/\r?\n/u).map(line=>line.trim()).filter(Boolean);
+  const entries = order.value.split(/\r?\n/u).map((line,index)=>({line:line.trim(),index})).filter(entry=>entry.line);
+  const lines = entries.map(entry=>entry.line);
   if (!lines.length) { showStatus('Skriv bestillingen med S Pen først.'); return; }
   if (editing && lines.length !== 1) { showStatus('Skriv én varelinje når du redigerer.'); return; }
   const rows = lines.map(parseLine);
   const unknown = rows.indexOf(null);
-  if (unknown >= 0) { showStatus('Kontroller linje ' + (unknown+1) + ': ' + lines[unknown]); return; }
+  if (unknown >= 0) {
+    renderCorrections(lines[unknown],entries[unknown].index);
+    showStatus('Kontroller linje ' + (entries[unknown].index+1) + ': ' + lines[unknown]);
+    return;
+  }
   if (strokes.length) {
     rows[0].ink = strokes;
     rows[0].image = inkImage(strokes);
