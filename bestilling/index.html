@@ -12,6 +12,10 @@ h1, h2, p { margin: 0 }
 h1 { font-size: clamp(26px,6vw,38px) }
 h2 { font-size: 18px }
 section { background: white; border: 1px solid #cfddd5; border-radius: 15px; padding: 14px; display: grid; gap: 10px }
+textarea { display: block; width: 100%; min-height: 130px; border: 1px solid #778e82; border-radius: 8px; padding: 12px; font: inherit; color: inherit; resize: vertical }
+details { display: grid; gap: 10px }
+details[open] > :not(summary) { margin-top: 10px }
+summary { cursor: pointer }
 canvas { display: block; width: 100%; height: 190px; border: 1px solid #778e82; border-radius: 8px; touch-action: none; cursor: crosshair }
 .row, .receipt-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px }
 button, select { min-height: 44px; padding: 8px 11px; border: 1px solid #9aada2; border-radius: 8px; background: white; color: inherit; font: inherit }
@@ -35,6 +39,12 @@ ul { list-style: none; padding: 0; margin: 0 }
 <main>
 <h1>Manuell bestilling</h1>
 <section>
+<h2><label for="order-text">Skriv hele bestillingen</label></h2>
+<textarea id="order-text" inputmode="none" autocomplete="off" spellcheck="false" placeholder="K. rull med x 2, 1x uten løk"></textarea>
+<button id="order-ok" class="primary" type="button">OK</button>
+<p id="order-status" class="help" role="status"></p>
+<details>
+<summary>Tegn en innlært vareforkortelse</summary>
 <h2 id="write-title">Skriv med pennen</h2>
 <p class="help">Skriv én innlært forkortelse, for eksempel k. rull, og trykk OK for å legge til varen.</p>
 <canvas id="pad" aria-labelledby="write-title"></canvas>
@@ -44,6 +54,7 @@ ul { list-style: none; padding: 0; margin: 0 }
 <button id="clear" type="button">Tøm feltet</button>
 </div>
 <p id="status" class="help" role="status"></p>
+</details>
 </section>
 <section>
 <h2>Varelinje</h2>
@@ -63,7 +74,10 @@ ul { list-style: none; padding: 0; margin: 0 }
 <output id="quantity" aria-label="Antall">1</output>
 <button id="plus" type="button" aria-label="Øk antall">+</button>
 <label><input id="hot" type="checkbox"> Sterk saus</label>
-<label><input id="no-onion" type="checkbox"> Uten løk</label>
+<label for="sauce">Saus</label>
+<select id="sauce"><option value="">Velg saus</option><option value="medium">Medium sos</option><option value="hot">Sterk saus</option></select>
+<label for="onions">Uten løk</label>
+<select id="onions"></select>
 </div>
 <div class="row">
 <button id="add" class="primary" type="button" disabled>Legg til</button>
@@ -84,8 +98,9 @@ const element = id => document.getElementById(id);
 const pad = element('pad');
 const context = pad.getContext('2d');
 const product = element('product');
-const hot = element('hot');
-const noOnion = element('no-onion');
+const sauce = element('sauce');
+const onions = element('onions');
+const orderText = element('order-text');
 const status = element('status');
 const products = { roll: 'Kebab Rull', plate: 'Kebab Tallerken', pizza: 'Stor Pepperoni' };
 const storageKey = 'bestilling-handwriting-v1';
@@ -268,7 +283,51 @@ element('recognize').onclick = () => {
   status.textContent = wasEditing ? 'Endring lagret: ' + name + '.' : 'Lagt til: ' + name + '.';
 };
 
+function parseOrder(text) {
+  const clean = text.normalize('NFKC').toLocaleLowerCase('nb').replace(/\s+/g, ' ').trim();
+  const aliases = [
+    [/^(?:k\.?\s*rull|kebab rull|kr)(?=\s|[,x×]|$)/, 'roll'],
+    [/^(?:k\.?\s*tall|kebab tallerken)(?=\s|[,x×]|$)/, 'plate'],
+    [/^(?:st\.?\s*pep|stor pepperoni)(?=\s|[,x×]|$)/, 'pizza']
+  ];
+  const entry = aliases.find(([pattern]) => pattern.test(clean));
+  if (!entry) return null;
+  const tail = clean.replace(entry[0], '').trim();
+  const match = tail.match(/^(?:(med(?:ium)?(?:\s+(?:sos|saus))?|sterk(?:\s+saus)?|acı|aci)\b\s*)?(?:[x×]\s*(\d{1,2})(?!\d))?(?:\s*,?\s*(?:(\d{1,2})\s*[x×]\s*)?(?:uten\s+løk|soğansız|sogansiz))?$/u);
+  if (!match) return null;
+  const quantity = Number(match[2] || 1);
+  const onionMentioned = /(?:uten\s+løk|soğansız|sogansiz)$/u.test(tail);
+  const noOnion = onionMentioned ? Number(match[3] || quantity) : 0;
+  if (quantity < 1 || (onionMentioned && noOnion < 1) || noOnion > quantity) return null;
+  return { key: entry[1], quantity, sauce: match[1]?.startsWith('med') ? 'medium' : match[1] ? 'hot' : '', noOnion };
+}
+
+element('order-ok').onclick = () => {
+  const feedback = element('order-status');
+  if (editing) {
+    feedback.textContent = 'Lagre eller avbryt varelinjen du endrer først.';
+    return;
+  }
+  const row = parseOrder(orderText.value);
+  if (!row) {
+    feedback.textContent = 'Kunne ikke lese bestillingen. Kontroller vare, antall og merknad.';
+    return;
+  }
+  rows.push(row);
+  orderText.value = '';
+  renderReceipt();
+  feedback.textContent = 'Lagt til: ' + products[row.key] + '.';
+};
+
 function refreshControls() {
+  const selectedOnions = Math.min(Number(onions.value || 0), quantity);
+  onions.replaceChildren(...Array.from({ length: quantity + 1 }, (_, count) => {
+    const option = document.createElement('option');
+    option.value = String(count);
+    option.textContent = String(count);
+    return option;
+  }));
+  onions.value = String(selectedOnions);
   element('quantity').value = String(quantity);
   element('minus').disabled = quantity <= 1;
   element('plus').disabled = quantity >= 99;
@@ -281,7 +340,8 @@ function refreshControls() {
 function finishEdit() {
   editing = null;
   product.value = '';
-  hot.checked = noOnion.checked = false;
+  sauce.value = '';
+  onions.value = '0';
   quantity = 1;
   clearInk();
   renderReceipt();
@@ -294,18 +354,19 @@ function renderReceipt() {
     item.className = 'receipt-row';
     const text = document.createElement('span');
     const options = [];
-    if (row.hot) options.push('sterk saus');
-    if (row.noOnion) options.push('uten løk');
-    text.textContent = row.quantity + '× ' + products[row.key] + (options.length ? ' – ' + options.join(', ') : '');
+    if (row.sauce === 'medium') options.push('Medium sos');
+    if (row.sauce === 'hot') options.push('sterk saus');
+    if (row.noOnion) options.push(row.noOnion + ' uten løk');
+    text.textContent = products[row.key] + ' x ' + row.quantity + ' Stk' + (options.length ? ' ' + options.join(', ') : '');
     const editButton = document.createElement('button');
     editButton.textContent = 'Endre';
     editButton.onclick = () => {
       editing = row;
       product.value = row.key;
       quantity = row.quantity;
-      hot.checked = row.hot;
-      noOnion.checked = row.noOnion;
+      sauce.value = row.sauce;
       refreshControls();
+      onions.value = String(row.noOnion);
       product.scrollIntoView({ block: 'nearest' });
     };
     const remove = document.createElement('button');
@@ -327,7 +388,7 @@ element('plus').onclick = () => { quantity++; refreshControls(); };
 element('cancel').onclick = finishEdit;
 function saveLine() {
   if (!product.value) return;
-  const row = { key: product.value, quantity, hot: hot.checked, noOnion: noOnion.checked };
+  const row = { key: product.value, quantity, sauce: sauce.value, noOnion: Number(onions.value || 0) };
   if (editing) Object.assign(editing, row);
   else rows.push(row);
   finishEdit();
