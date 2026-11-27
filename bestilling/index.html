@@ -40,7 +40,10 @@ li small{display:block;margin-top:2px;color:var(--muted)}
 #latest li{background:#e3f1e8;border-radius:9px}
 .icon{min-width:44px;padding:0;font-size:20px}
 .remove{color:#922f2f}
-footer{color:var(--muted);font-size:14px;gap:5px;padding:4px 6px;background:var(--page)}
+footer{color:var(--muted);font-size:14px;gap:5px;padding:3px 6px;background:var(--page)}
+#ok{display:grid;place-items:center}
+#ok[aria-busy=true] svg{opacity:.45}
+#total{display:none}
 footer .tool-icon{display:grid;place-items:center;width:44px;padding:0}
 #total{white-space:nowrap;font-size:12px}
 #all{align-self:flex-end}
@@ -72,7 +75,7 @@ dialog::backdrop{background:#102a2380}
 </section>
 <footer aria-label="Bestillingshandlinger">
 <button id="clear" class="tool-icon" type="button" aria-label="Tøm felt" title="Tøm felt"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg></button>
-<button id="ok" class="primary" type="button">OK</button>
+<button id="ok" class="primary" type="button" aria-label="Legg til bestilling" title="Legg til bestilling"><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg></button>
 <span id="total" hidden></span><button id="print" class="print-icon" type="button" aria-label="Skriv ut bestillingen" title="Skriv ut bestillingen" disabled><svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6zM17 12h1"/></svg></button></footer>
 </main>
 <dialog id="basket"><div class="sheet-top"><h2>Alle varer</h2><form method="dialog"><button aria-label="Lukk bestillingen">×</button></form></div><ul id="basket-lines"></ul></dialog>
@@ -496,6 +499,34 @@ function parseLine(source) {
   return { source, quantity, name: [menuSize,nameOf(product)].filter(Boolean).join(' '), notes };
 }
 
+function searchMenuLine(source) {
+  if (source.includes('?') || source.length > 120) return null;
+  const clean = normalize(source);
+  const prefix = clean.match(/^(?:\d{1,2}\s*[x×]\s*)?(?:(?:st\.?|stor|medium)\s+)?/u)[0];
+  const remainder = clean.slice(prefix.length);
+  if (productMatches(remainder).length > 1) return null;
+  const boundary = remainder.search(/[,;+−]|-(?=\s*\p{L})|\s+(?=(?:\d{1,2}\s*[x×]|[x×]\s*\d|st\.?\b|stor\b|medium\b|med\b|mild\b|sterk\b|uten\b|ingen\b|ekstra\b))/u);
+  const head = boundary < 0 ? remainder : remainder.slice(0,boundary);
+  const tail = boundary < 0 ? '' : remainder.slice(boundary).trim();
+  if (!/^[\p{L}.\s]+$/u.test(head)) return null;
+  const hints = fold(head).match(/[a-z]+/g) || [];
+  if (hints.length < 2 || hints.length > 5 || hints.some(hint=>hint.length < 3)) return null;
+  const matches = new Map();
+  for (const product of catalog.products) {
+    const words = menuWords(nameOf(product));
+    const used = new Set();
+    if (!hints.map((hint,index)=>index).sort((a,b)=>hints[b].length-hints[a].length).every(index=>{
+      const word = words.find(token=>!used.has(token) && token.startsWith(hints[index]));
+      if (!word) return false;
+      used.add(word);
+      return true;
+    })) continue;
+    const row = parseLine([prefix+product.name,tail].filter(Boolean).join(' '));
+    if (row) matches.set(row.name,row);
+  }
+  return matches.size===1 ? matches.values().next().value : null;
+}
+
 function spellingDistance(a,b) {
   let previous = Array.from({length:b.length+1},(_,i)=>i);
   let earlier;
@@ -594,7 +625,6 @@ function resetEditor() {
   pageTop = 0;
   pointer = null;
   redraw();
-  byId('ok').textContent = 'OK';
 }
 byId('clear').onclick = resetEditor;
 function inkSignature(paths, width, height) {
@@ -701,7 +731,7 @@ async function readInk(paths) {
   readingInk = true;
   const button = byId('ok');
   button.disabled = true;
-  button.textContent = 'Leser…';
+  button.setAttribute('aria-busy','true');
   try {
     const image = inkImage(paths);
     const response = await fetch(recognition.endpoint,{
@@ -721,7 +751,7 @@ async function readInk(paths) {
   } finally {
     readingInk = false;
     button.disabled = false;
-    button.textContent = editing ? 'Lagre' : 'OK';
+    button.removeAttribute('aria-busy');
   }
 }
 
@@ -737,7 +767,7 @@ function submitTranscript() {
     showStatus('Skriv én varelinje når du redigerer.');
     return;
   }
-  const rows = transcript.map(line=>line.includes('?') ? null : parseLine(line));
+  const rows = transcript.map(line=>line.includes('?') ? null : parseLine(line) || searchMenuLine(line));
   const unknown = rows.indexOf(null);
   if (unknown>=0) {
     renderCorrections(transcript[unknown],unknown);
@@ -784,7 +814,6 @@ function makeItem(row, actionable) {
       clearTranscript();
       strokes = row.ink ? row.ink.map(path => [...path]) : [];
       pageTop = 0;
-      byId('ok').textContent = 'Lagre';
       redraw();
       showStatus('Skriv varelinjen på nytt med pennen.');
     }],
